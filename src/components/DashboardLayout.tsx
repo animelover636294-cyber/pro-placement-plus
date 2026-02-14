@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { NavLink } from "@/components/NavLink";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -107,6 +108,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </SidebarTrigger>
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">{user?.email}</span>
+              <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="mr-1 h-4 w-4" /> Sign out
               </Button>
