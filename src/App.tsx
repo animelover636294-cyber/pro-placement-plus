@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { DashboardLayout } from "@/components/DashboardLayout";
+import { ThemeProvider } from "@/components/ThemeProvider";
 
 import Index from "./pages/Index";
 import Login from "./pages/Login";
@@ -37,37 +38,39 @@ function AuthRedirect() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AuthProvider>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
 
-            {/* Admin routes */}
-            <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminDashboard /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/companies" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminCompanies /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/tests" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminTests /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminStudents /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminAnalytics /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminReports /></DashboardLayout></ProtectedRoute>} />
+              {/* Admin routes */}
+              <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminDashboard /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/companies" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminCompanies /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/tests" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminTests /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/students" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminStudents /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminAnalytics /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminReports /></DashboardLayout></ProtectedRoute>} />
 
-            {/* Student routes */}
-            <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentDashboard /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/dashboard/tests" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentTests /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/dashboard/results" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentResults /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/dashboard/schedule" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentSchedule /></DashboardLayout></ProtectedRoute>} />
-            <Route path="/dashboard/profile" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentProfile /></DashboardLayout></ProtectedRoute>} />
+              {/* Student routes */}
+              <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentDashboard /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/tests" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentTests /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/results" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentResults /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/schedule" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentSchedule /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/profile" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentProfile /></DashboardLayout></ProtectedRoute>} />
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </TooltipProvider>
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </AuthProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
