@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles } from "lucide-react";
 import { format, isPast, differenceInSeconds } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -26,7 +26,6 @@ interface Question {
   points: number;
 }
 
-// Fisher-Yates shuffle
 function shuffle<T>(arr: T[]): T[] {
   const a = [...arr];
   for (let i = a.length - 1; i > 0; i--) {
@@ -42,7 +41,6 @@ export default function StudentTests() {
   const [attemptCounts, setAttemptCounts] = useState<Record<string, number>>({});
   const [profileCompletion, setProfileCompletion] = useState(0);
 
-  // Test-taking state
   const [activeTest, setActiveTest] = useState<Test | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -50,6 +48,8 @@ export default function StudentTests() {
   const [timeLeft, setTimeLeft] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [result, setResult] = useState<{ score: number; total: number; passed: boolean; scores: Record<string, number> } | null>(null);
+  const [aiFeedback, setAiFeedback] = useState<string | null>(null);
+  const [loadingFeedback, setLoadingFeedback] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
 
@@ -73,7 +73,6 @@ export default function StudentTests() {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Timer
   useEffect(() => {
     if (!activeTest || submitted) return;
     timerRef.current = setInterval(() => {
@@ -90,10 +89,7 @@ export default function StudentTests() {
 
   const startTest = (test: Test) => {
     const bank = (test.question_bank as unknown as Question[]) ?? [];
-    if (bank.length === 0) {
-      toast.error("This test has no questions");
-      return;
-    }
+    if (bank.length === 0) { toast.error("This test has no questions"); return; }
     const count = test.questions_per_student ?? bank.length;
     const selected = shuffle(bank).slice(0, count);
     setQuestions(selected);
@@ -102,8 +98,34 @@ export default function StudentTests() {
     setTimeLeft(test.duration * 60);
     setSubmitted(false);
     setResult(null);
+    setAiFeedback(null);
     setActiveTest(test);
     submittingRef.current = false;
+  };
+
+  const generateFeedback = async (testTitle: string, totalScore: number, passed: boolean, scores: Record<string, number>) => {
+    setLoadingFeedback(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-feedback", {
+        body: { testTitle, totalScore, passed, scores },
+      });
+      if (error) throw error;
+      const feedback = data?.feedback || "Unable to generate feedback.";
+      setAiFeedback(feedback);
+
+      // Save feedback to the attempt
+      if (user && activeTest) {
+        await supabase.from("test_attempts")
+          .update({ feedback } as Record<string, unknown>)
+          .eq("student_id", user.id)
+          .eq("test_id", activeTest.id)
+          .order("created_at", { ascending: false })
+          .limit(1);
+      }
+    } catch {
+      setAiFeedback("Could not generate AI feedback at this time.");
+    }
+    setLoadingFeedback(false);
   };
 
   const handleSubmit = async () => {
@@ -111,7 +133,6 @@ export default function StudentTests() {
     submittingRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
 
-    // Score calculation
     let totalScore = 0;
     let totalPoints = 0;
     const subjectScores: Record<string, { earned: number; total: number }> = {};
@@ -162,12 +183,16 @@ export default function StudentTests() {
     setResult({ score: scorePercent, total: totalPoints, passed, scores: scoresMap });
     setSubmitted(true);
     fetchData();
+
+    // Generate AI feedback
+    generateFeedback(activeTest.title, scorePercent, passed, scoresMap);
   };
 
   const exitTest = () => {
     setActiveTest(null);
     setSubmitted(false);
     setResult(null);
+    setAiFeedback(null);
   };
 
   const formatTime = (secs: number) => {
@@ -176,11 +201,10 @@ export default function StudentTests() {
     return `${m}:${s.toString().padStart(2, "0")}`;
   };
 
-  // Fullscreen test mode
   if (activeTest) {
     if (submitted && result) {
       return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6 overflow-auto">
           <Card className="w-full max-w-lg">
             <CardHeader className="text-center">
               {result.passed ? (
@@ -211,6 +235,23 @@ export default function StudentTests() {
                   ))}
                 </div>
               )}
+
+              {/* AI Feedback */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-primary" />
+                  <h4 className="text-sm font-medium">AI Feedback</h4>
+                </div>
+                {loadingFeedback ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Generating personalized feedback…
+                  </div>
+                ) : aiFeedback ? (
+                  <p className="text-sm text-muted-foreground whitespace-pre-line">{aiFeedback}</p>
+                ) : null}
+              </div>
+
               <Button onClick={exitTest} className="w-full">Back to Tests</Button>
             </CardContent>
           </Card>
@@ -223,24 +264,17 @@ export default function StudentTests() {
 
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
-        {/* Header */}
         <div className="flex items-center justify-between border-b px-6 py-3">
           <h2 className="font-semibold">{activeTest.title}</h2>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">
-              {currentIdx + 1} / {questions.length}
-            </span>
+            <span className="text-sm text-muted-foreground">{currentIdx + 1} / {questions.length}</span>
             <Badge variant={isLowTime ? "destructive" : "secondary"} className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatTime(timeLeft)}
             </Badge>
           </div>
         </div>
-
-        {/* Progress */}
         <Progress value={((currentIdx + 1) / questions.length) * 100} className="h-1 rounded-none" />
-
-        {/* Question */}
         <div className="flex-1 overflow-auto p-6">
           <div className="mx-auto max-w-2xl space-y-6">
             <div className="space-y-2">
@@ -252,13 +286,8 @@ export default function StudentTests() {
               </div>
               <p className="text-lg font-medium">{q.text}</p>
             </div>
-
             {q.type === "mcq" && q.options ? (
-              <RadioGroup
-                value={answers[q.id] ?? ""}
-                onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })}
-                className="space-y-3"
-              >
+              <RadioGroup value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })} className="space-y-3">
                 {q.options.map((opt, i) => (
                   <div key={i} className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
                     <RadioGroupItem value={String.fromCharCode(65 + i)} id={`opt-${i}`} />
@@ -272,36 +301,20 @@ export default function StudentTests() {
             ) : (
               <div className="space-y-2">
                 <Label>Your Answer</Label>
-                <Textarea
-                  value={answers[q.id] ?? ""}
-                  onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                  placeholder="Type your answer here…"
-                  rows={6}
-                  className="font-mono"
-                />
+                <Textarea value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} placeholder="Type your answer here…" rows={6} className="font-mono" />
               </div>
             )}
           </div>
         </div>
-
-        {/* Navigation */}
         <div className="flex items-center justify-between border-t px-6 py-3">
-          <Button
-            variant="outline"
-            onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))}
-            disabled={currentIdx === 0}
-          >
+          <Button variant="outline" onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0}>
             <ArrowLeft className="mr-2 h-4 w-4" /> Previous
           </Button>
           <div className="flex gap-2">
             {currentIdx < questions.length - 1 ? (
-              <Button onClick={() => setCurrentIdx(currentIdx + 1)}>
-                Next <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Button onClick={() => setCurrentIdx(currentIdx + 1)}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
             ) : (
-              <Button onClick={handleSubmit} variant="default">
-                Submit Test
-              </Button>
+              <Button onClick={handleSubmit} variant="default">Submit Test</Button>
             )}
           </div>
         </div>
@@ -309,7 +322,6 @@ export default function StudentTests() {
     );
   }
 
-  // Test list view
   const eligible = profileCompletion >= 80;
   const now = new Date();
 
@@ -319,7 +331,6 @@ export default function StudentTests() {
         <h1 className="text-3xl font-bold tracking-tight">My Tests</h1>
         <p className="text-muted-foreground">View and take scheduled tests</p>
       </div>
-
       {!eligible && (
         <Card className="border-warning/50 bg-warning/5">
           <CardContent className="flex items-center gap-3 py-4">
@@ -328,7 +339,6 @@ export default function StudentTests() {
           </CardContent>
         </Card>
       )}
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {tests.map((test) => {
           const attempts = attemptCounts[test.id] ?? 0;
@@ -343,40 +353,18 @@ export default function StudentTests() {
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-base">{test.title}</CardTitle>
-                  {exhausted ? (
-                    <Badge variant="secondary">Completed</Badge>
-                  ) : isUpcoming ? (
-                    <Badge variant="outline">Upcoming</Badge>
-                  ) : (
-                    <Badge>Available</Badge>
-                  )}
+                  {exhausted ? <Badge variant="secondary">Completed</Badge> : isUpcoming ? <Badge variant="outline">Upcoming</Badge> : <Badge>Available</Badge>}
                 </div>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                  <span>Date</span>
-                  <span className="text-right">{format(new Date(test.scheduled_date), "MMM d, yyyy h:mm a")}</span>
-                  <span>Duration</span>
-                  <span className="text-right">{test.duration} min</span>
-                  <span>Questions</span>
-                  <span className="text-right">{test.questions_per_student ?? qCount}</span>
-                  <span>Attempts</span>
-                  <span className="text-right">{attempts} / {maxAttempts}</span>
+                  <span>Date</span><span className="text-right">{format(new Date(test.scheduled_date), "MMM d, yyyy h:mm a")}</span>
+                  <span>Duration</span><span className="text-right">{test.duration} min</span>
+                  <span>Questions</span><span className="text-right">{test.questions_per_student ?? qCount}</span>
+                  <span>Attempts</span><span className="text-right">{attempts} / {maxAttempts}</span>
                 </div>
-                <Button
-                  className="w-full"
-                  disabled={!eligible || exhausted || isUpcoming}
-                  onClick={() => startTest(test)}
-                >
-                  {exhausted
-                    ? "Max Attempts Reached"
-                    : isUpcoming
-                    ? `Starts in ${Math.floor(secsUntil / 3600)}h ${Math.floor((secsUntil % 3600) / 60)}m`
-                    : !eligible
-                    ? "Profile Incomplete"
-                    : attempts > 0
-                    ? "Retake Test"
-                    : "Start Test"}
+                <Button className="w-full" disabled={!eligible || exhausted || isUpcoming} onClick={() => startTest(test)}>
+                  {exhausted ? "Max Attempts Reached" : isUpcoming ? `Starts in ${Math.floor(secsUntil / 3600)}h ${Math.floor((secsUntil % 3600) / 60)}m` : !eligible ? "Profile Incomplete" : attempts > 0 ? "Retake Test" : "Start Test"}
                 </Button>
               </CardContent>
             </Card>
@@ -384,9 +372,7 @@ export default function StudentTests() {
         })}
         {tests.length === 0 && (
           <Card className="sm:col-span-2 lg:col-span-3">
-            <CardContent className="py-8 text-center text-muted-foreground">
-              No tests available yet. Check back later.
-            </CardContent>
+            <CardContent className="py-8 text-center text-muted-foreground">No tests available yet. Check back later.</CardContent>
           </Card>
         )}
       </div>

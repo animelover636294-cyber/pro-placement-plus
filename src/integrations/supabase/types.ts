@@ -49,6 +49,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          branch: string | null
           cgpa: number | null
           created_at: string
           email: string | null
@@ -57,9 +58,11 @@ export type Database = {
           profile_completion_percentage: number | null
           resume_url: string | null
           updated_at: string
+          usn: string | null
           year_of_passing: number | null
         }
         Insert: {
+          branch?: string | null
           cgpa?: number | null
           created_at?: string
           email?: string | null
@@ -68,9 +71,11 @@ export type Database = {
           profile_completion_percentage?: number | null
           resume_url?: string | null
           updated_at?: string
+          usn?: string | null
           year_of_passing?: number | null
         }
         Update: {
+          branch?: string | null
           cgpa?: number | null
           created_at?: string
           email?: string | null
@@ -79,6 +84,7 @@ export type Database = {
           profile_completion_percentage?: number | null
           resume_url?: string | null
           updated_at?: string
+          usn?: string | null
           year_of_passing?: number | null
         }
         Relationships: []
