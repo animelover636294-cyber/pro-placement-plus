@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles } from "lucide-react";
-import { format, isPast, differenceInSeconds } from "date-fns";
+import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Test = Tables<"tests">;
@@ -358,7 +358,7 @@ export default function StudentTests() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                  <span>Date</span><span className="text-right">{format(new Date(test.scheduled_date), "MMM d, yyyy h:mm a")}</span>
+                  <span>Date (IST)</span><span className="text-right">{format(new Date(test.scheduled_date), "MMM d, yyyy h:mm a")}</span>
                   <span>Duration</span><span className="text-right">{test.duration} min</span>
                   <span>Questions</span><span className="text-right">{test.questions_per_student ?? qCount}</span>
                   <span>Attempts</span><span className="text-right">{attempts} / {maxAttempts}</span>

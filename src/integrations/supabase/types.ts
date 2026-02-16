@@ -52,11 +52,15 @@ export type Database = {
           branch: string | null
           cgpa: number | null
           created_at: string
+          current_semester: number | null
           email: string | null
           id: string
+          is_lateral_entry: boolean | null
+          marks_cards: Json | null
           name: string | null
           profile_completion_percentage: number | null
           resume_url: string | null
+          sgpas: Json | null
           updated_at: string
           usn: string | null
           year_of_passing: number | null
@@ -65,11 +69,15 @@ export type Database = {
           branch?: string | null
           cgpa?: number | null
           created_at?: string
+          current_semester?: number | null
           email?: string | null
           id: string
+          is_lateral_entry?: boolean | null
+          marks_cards?: Json | null
           name?: string | null
           profile_completion_percentage?: number | null
           resume_url?: string | null
+          sgpas?: Json | null
           updated_at?: string
           usn?: string | null
           year_of_passing?: number | null
@@ -78,11 +86,15 @@ export type Database = {
           branch?: string | null
           cgpa?: number | null
           created_at?: string
+          current_semester?: number | null
           email?: string | null
           id?: string
+          is_lateral_entry?: boolean | null
+          marks_cards?: Json | null
           name?: string | null
           profile_completion_percentage?: number | null
           resume_url?: string | null
+          sgpas?: Json | null
           updated_at?: string
           usn?: string | null
           year_of_passing?: number | null
