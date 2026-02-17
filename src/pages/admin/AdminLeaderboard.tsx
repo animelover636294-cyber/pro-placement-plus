@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Trophy, Medal, Award } from "lucide-react";
+import { Trophy, Medal, Award, Download } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface StudentScore {
   studentId: string;
@@ -89,6 +90,22 @@ export default function AdminLeaderboard() {
       .sort((a, b) => b.avgScore - a.avgScore);
   }, [attempts, profiles, filteredTestIds]);
 
+  const exportCSV = () => {
+    if (leaderboard.length === 0) return;
+    const headers = ["Rank", "Name", "Email", "Avg Score", "Tests Attempted", "Pass Rate (%)", "CGPA"];
+    const rows = leaderboard.map((s, i) => [
+      i + 1, `"${s.name}"`, `"${s.email}"`, s.avgScore, s.testsAttempted, s.passRate, s.cgpa?.toFixed(2) ?? "",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "leaderboard.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const RankIcon = ({ rank }: { rank: number }) => {
     if (rank === 1) return <Trophy className="h-5 w-5" style={{ color: "hsl(38, 92%, 50%)" }} />;
     if (rank === 2) return <Medal className="h-5 w-5 text-muted-foreground" />;
@@ -127,6 +144,10 @@ export default function AdminLeaderboard() {
             ))}
           </SelectContent>
         </Select>
+
+        <Button variant="outline" size="sm" onClick={exportCSV} disabled={leaderboard.length === 0}>
+          <Download className="mr-1 h-4 w-4" /> Export CSV
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
