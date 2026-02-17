@@ -39,6 +39,7 @@ const adminLinks = [
   { title: "Students", url: "/admin/students", icon: Users },
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Reports", url: "/admin/reports", icon: FileText },
+  { title: "Leaderboard", url: "/admin/leaderboard", icon: Trophy },
 ];
 
 const studentLinks = [
