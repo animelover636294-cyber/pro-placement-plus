@@ -29,6 +29,7 @@ import {
   UserCircle,
   LogOut,
   Menu,
+  Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -40,6 +41,7 @@ const adminLinks = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Reports", url: "/admin/reports", icon: FileText },
   { title: "Leaderboard", url: "/admin/leaderboard", icon: Trophy },
+  { title: "Security", url: "/admin/settings", icon: Shield },
 ];
 
 const studentLinks = [

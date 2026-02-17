@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
+import { useAuditLog } from "@/hooks/useAuditLog";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -72,6 +73,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 }
 
 export default function AdminTests() {
+  const { log: auditLog } = useAuditLog();
   const [tests, setTests] = useState<Test[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [search, setSearch] = useState("");
@@ -274,10 +276,12 @@ export default function AdminTests() {
       const { error } = await supabase.from("tests").update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Test updated");
+      auditLog("test_updated", "tests", editing.id, { title: form.title });
     } else {
       const { data: newTest, error } = await supabase.from("tests").insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
       toast.success("Test created");
+      auditLog("test_created", "tests", newTest.id, { title: form.title });
 
       // Send email notifications
       try {
@@ -317,6 +321,7 @@ export default function AdminTests() {
     const { error } = await supabase.from("tests").delete().eq("id", id);
     if (error) { toast.error(error.message); return; }
     toast.success("Test deleted");
+    auditLog("test_deleted", "tests", id);
     fetchTests();
   };
 

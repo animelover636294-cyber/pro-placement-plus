@@ -21,6 +21,7 @@ import AdminStudents from "./pages/admin/AdminStudents";
 import AdminAnalytics from "./pages/admin/AdminAnalytics";
 import AdminReports from "./pages/admin/AdminReports";
 import AdminLeaderboard from "./pages/admin/AdminLeaderboard";
+import AdminSettings from "./pages/admin/AdminSettings";
 
 import StudentDashboard from "./pages/student/StudentDashboard";
 import StudentTests from "./pages/student/StudentTests";
@@ -59,6 +60,7 @@ const App = () => (
               <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminAnalytics /></DashboardLayout></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminReports /></DashboardLayout></ProtectedRoute>} />
               <Route path="/admin/leaderboard" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminLeaderboard /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminSettings /></DashboardLayout></ProtectedRoute>} />
 
               {/* Student routes */}
               <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentDashboard /></DashboardLayout></ProtectedRoute>} />
