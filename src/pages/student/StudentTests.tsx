@@ -9,7 +9,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye } from "lucide-react";
 import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -35,6 +35,147 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+// Review component showing wrong answers with explanations
+function TestReview({ questions, answers, explanations, loadingExplanations, onClose }: {
+  questions: Question[];
+  answers: Record<string, string>;
+  explanations: Record<string, { why_wrong: string; why_right: string }>;
+  loadingExplanations: boolean;
+  onClose: () => void;
+}) {
+  const wrongQuestions = questions.filter((q) => {
+    const userAnswer = (answers[q.id] ?? "").trim().toLowerCase();
+    const correct = q.correct_answer.trim().toLowerCase();
+    return userAnswer !== correct;
+  });
+
+  const correctQuestions = questions.filter((q) => {
+    const userAnswer = (answers[q.id] ?? "").trim().toLowerCase();
+    const correct = q.correct_answer.trim().toLowerCase();
+    return userAnswer === correct;
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col bg-background overflow-auto">
+      <div className="flex items-center justify-between border-b px-6 py-3">
+        <h2 className="font-semibold text-lg">Test Review</h2>
+        <Button variant="outline" onClick={onClose}>Close Review</Button>
+      </div>
+      <div className="flex-1 overflow-auto p-6">
+        <div className="mx-auto max-w-3xl space-y-6">
+          {/* Summary */}
+          <div className="flex gap-4">
+            <Card className="flex-1">
+              <CardContent className="py-4 text-center">
+                <CheckCircle2 className="mx-auto h-6 w-6 text-green-500 mb-1" />
+                <p className="text-2xl font-bold text-green-600">{correctQuestions.length}</p>
+                <p className="text-xs text-muted-foreground">Correct</p>
+              </CardContent>
+            </Card>
+            <Card className="flex-1">
+              <CardContent className="py-4 text-center">
+                <XCircle className="mx-auto h-6 w-6 text-destructive mb-1" />
+                <p className="text-2xl font-bold text-destructive">{wrongQuestions.length}</p>
+                <p className="text-xs text-muted-foreground">Incorrect</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {wrongQuestions.length === 0 ? (
+            <Card>
+              <CardContent className="py-8 text-center">
+                <CheckCircle2 className="mx-auto h-12 w-12 text-green-500 mb-2" />
+                <p className="font-medium">Perfect score! All answers were correct.</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <>
+              <h3 className="text-lg font-semibold text-destructive">Incorrect Answers ({wrongQuestions.length})</h3>
+              {wrongQuestions.map((q, idx) => {
+                const userAnswer = answers[q.id] ?? "Not answered";
+                const explanation = explanations[q.id];
+                const optionLabel = (letter: string) => {
+                  if (q.options) {
+                    const i = letter.charCodeAt(0) - 65;
+                    return q.options[i] ? `${letter}. ${q.options[i]}` : letter;
+                  }
+                  return letter;
+                };
+
+                return (
+                  <Card key={q.id} className="border-destructive/30">
+                    <CardHeader className="pb-2">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline" className="text-xs">Q{idx + 1}</Badge>
+                        <Badge variant="secondary">{q.subject}</Badge>
+                        {q.topic && <Badge variant="secondary">{q.topic}</Badge>}
+                      </div>
+                      <p className="font-medium mt-2">{q.text}</p>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      <div className="rounded-md border border-destructive/50 bg-destructive/5 p-3">
+                        <p className="text-xs font-medium text-destructive mb-1">Your Answer:</p>
+                        <p className="text-sm">{optionLabel(userAnswer)}</p>
+                      </div>
+                      <div className="rounded-md border border-green-500/50 bg-green-500/5 p-3">
+                        <p className="text-xs font-medium text-green-600 mb-1">Correct Answer:</p>
+                        <p className="text-sm">{optionLabel(q.correct_answer)}</p>
+                      </div>
+
+                      {loadingExplanations ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+                          <Loader2 className="h-4 w-4 animate-spin" /> Generating explanation…
+                        </div>
+                      ) : explanation ? (
+                        <div className="space-y-2">
+                          <div className="rounded-md bg-muted p-3">
+                            <p className="text-xs font-medium text-destructive mb-1">Why your answer is wrong:</p>
+                            <p className="text-sm text-muted-foreground">{explanation.why_wrong}</p>
+                          </div>
+                          <div className="rounded-md bg-muted p-3">
+                            <p className="text-xs font-medium text-green-600 mb-1">Why the correct answer is right:</p>
+                            <p className="text-sm text-muted-foreground">{explanation.why_right}</p>
+                          </div>
+                        </div>
+                      ) : null}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </>
+          )}
+
+          {correctQuestions.length > 0 && (
+            <>
+              <h3 className="text-lg font-semibold text-green-600">Correct Answers ({correctQuestions.length})</h3>
+              {correctQuestions.map((q, idx) => (
+                <Card key={q.id} className="border-green-500/30">
+                  <CardHeader className="pb-2">
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">Q{idx + 1}</Badge>
+                      <Badge variant="secondary">{q.subject}</Badge>
+                      <CheckCircle2 className="h-4 w-4 text-green-500 ml-auto" />
+                    </div>
+                    <p className="font-medium mt-2">{q.text}</p>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="rounded-md border border-green-500/50 bg-green-500/5 p-3">
+                      <p className="text-xs font-medium text-green-600 mb-1">Your Answer (Correct):</p>
+                      <p className="text-sm">
+                        {q.options ? `${answers[q.id]}. ${q.options[answers[q.id]?.charCodeAt(0) - 65] ?? ""}` : answers[q.id]}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StudentTests() {
   const { user } = useAuth();
   const [tests, setTests] = useState<Test[]>([]);
@@ -52,6 +193,11 @@ export default function StudentTests() {
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittingRef = useRef(false);
+
+  // Review state
+  const [showReview, setShowReview] = useState(false);
+  const [explanations, setExplanations] = useState<Record<string, { why_wrong: string; why_right: string }>>({});
+  const [loadingExplanations, setLoadingExplanations] = useState(false);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -99,8 +245,43 @@ export default function StudentTests() {
     setSubmitted(false);
     setResult(null);
     setAiFeedback(null);
+    setShowReview(false);
+    setExplanations({});
     setActiveTest(test);
     submittingRef.current = false;
+  };
+
+  const generateExplanations = async (qs: Question[], ans: Record<string, string>) => {
+    const wrongQs = qs.filter((q) => {
+      const userAnswer = (ans[q.id] ?? "").trim().toLowerCase();
+      return userAnswer !== q.correct_answer.trim().toLowerCase();
+    });
+
+    if (wrongQs.length === 0) return;
+    setLoadingExplanations(true);
+
+    try {
+      const { data, error } = await supabase.functions.invoke("generate-feedback", {
+        body: {
+          mode: "explanations",
+          questions: wrongQs.map((q) => ({
+            id: q.id,
+            text: q.text,
+            options: q.options,
+            correct_answer: q.correct_answer,
+            user_answer: ans[q.id] ?? "Not answered",
+            subject: q.subject,
+          })),
+        },
+      });
+      if (error) throw error;
+      if (data?.explanations) {
+        setExplanations(data.explanations);
+      }
+    } catch {
+      // silently fail
+    }
+    setLoadingExplanations(false);
   };
 
   const generateFeedback = async (testTitle: string, totalScore: number, passed: boolean, scores: Record<string, number>) => {
@@ -113,7 +294,6 @@ export default function StudentTests() {
       const feedback = data?.feedback || "Unable to generate feedback.";
       setAiFeedback(feedback);
 
-      // Save feedback to the attempt
       if (user && activeTest) {
         await supabase.from("test_attempts")
           .update({ feedback } as Record<string, unknown>)
@@ -184,8 +364,9 @@ export default function StudentTests() {
     setSubmitted(true);
     fetchData();
 
-    // Generate AI feedback
+    // Generate AI feedback and explanations in parallel
     generateFeedback(activeTest.title, scorePercent, passed, scoresMap);
+    generateExplanations(questions, answers);
   };
 
   const exitTest = () => {
@@ -193,6 +374,8 @@ export default function StudentTests() {
     setSubmitted(false);
     setResult(null);
     setAiFeedback(null);
+    setShowReview(false);
+    setExplanations({});
   };
 
   const formatTime = (secs: number) => {
@@ -202,6 +385,19 @@ export default function StudentTests() {
   };
 
   if (activeTest) {
+    // Show review screen
+    if (showReview) {
+      return (
+        <TestReview
+          questions={questions}
+          answers={answers}
+          explanations={explanations}
+          loadingExplanations={loadingExplanations}
+          onClose={() => setShowReview(false)}
+        />
+      );
+    }
+
     if (submitted && result) {
       return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6 overflow-auto">
@@ -252,7 +448,12 @@ export default function StudentTests() {
                 ) : null}
               </div>
 
-              <Button onClick={exitTest} className="w-full">Back to Tests</Button>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowReview(true)} className="flex-1">
+                  <Eye className="mr-2 h-4 w-4" /> Review Answers
+                </Button>
+                <Button onClick={exitTest} className="flex-1">Back to Tests</Button>
+              </div>
             </CardContent>
           </Card>
         </div>

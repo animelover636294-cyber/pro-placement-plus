@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import { GraduationCap } from "lucide-react";
+import { GraduationCap, Shield, Loader2 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -15,18 +16,103 @@ export default function Login() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
+  // MFA state
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaFactorId, setMfaFactorId] = useState<string | null>(null);
+  const [mfaCode, setMfaCode] = useState("");
+  const [verifyingMfa, setVerifyingMfa] = useState(false);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     const { error } = await signIn(email, password);
     setIsLoading(false);
+
     if (error) {
       toast.error(error.message);
+      return;
+    }
+
+    // Check if user has MFA enabled
+    const { data: factorsData } = await supabase.auth.mfa.listFactors();
+    const verifiedFactors = factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
+
+    if (verifiedFactors.length > 0) {
+      // MFA is required
+      setMfaRequired(true);
+      setMfaFactorId(verifiedFactors[0].id);
     } else {
       toast.success("Signed in successfully");
       navigate("/");
     }
   };
+
+  const handleMfaVerify = async () => {
+    if (!mfaFactorId) return;
+    setVerifyingMfa(true);
+
+    const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+    if (challenge.error) {
+      toast.error(challenge.error.message);
+      setVerifyingMfa(false);
+      return;
+    }
+
+    const verify = await supabase.auth.mfa.verify({
+      factorId: mfaFactorId,
+      challengeId: challenge.data.id,
+      code: mfaCode,
+    });
+
+    setVerifyingMfa(false);
+    if (verify.error) {
+      toast.error("Invalid code. Please try again.");
+      return;
+    }
+
+    toast.success("Signed in successfully");
+    navigate("/");
+  };
+
+  if (mfaRequired) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+              <Shield className="h-6 w-6" />
+            </div>
+            <CardTitle className="text-2xl">Two-Factor Authentication</CardTitle>
+            <CardDescription>Enter the 6-digit code from Google Authenticator</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="mfa-code">Authentication Code</Label>
+              <Input
+                id="mfa-code"
+                type="text"
+                inputMode="numeric"
+                placeholder="Enter 6-digit code"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                maxLength={6}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(); }}
+              />
+            </div>
+          </CardContent>
+          <CardFooter className="flex flex-col gap-4">
+            <Button onClick={handleMfaVerify} className="w-full" disabled={mfaCode.length !== 6 || verifyingMfa}>
+              {verifyingMfa ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying…</> : "Verify & Sign In"}
+            </Button>
+            <Button variant="ghost" className="w-full" onClick={() => { setMfaRequired(false); setMfaCode(""); supabase.auth.signOut(); }}>
+              Back to Login
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">

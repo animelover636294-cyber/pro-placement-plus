@@ -8,8 +8,9 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { Shield, UserPlus, ScrollText, KeyRound, Loader2 } from "lucide-react";
+import { Shield, UserPlus, ScrollText, KeyRound, Loader2, Trash2 } from "lucide-react";
 import { useAuditLog } from "@/hooks/useAuditLog";
 
 export default function AdminSettings() {
@@ -35,6 +36,7 @@ export default function AdminSettings() {
 }
 
 function MFASection() {
+  const { user } = useAuth();
   const [factors, setFactors] = useState<any[]>([]);
   const [enrolling, setEnrolling] = useState(false);
   const [qrCode, setQrCode] = useState<string | null>(null);
@@ -43,6 +45,14 @@ function MFASection() {
   const [verifyCode, setVerifyCode] = useState("");
   const [loading, setLoading] = useState(true);
   const { log } = useAuditLog();
+
+  // Delete 2FA state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleteFactorId, setDeleteFactorId] = useState<string | null>(null);
+  const [otpSent, setOtpSent] = useState(false);
+  const [emailOtp, setEmailOtp] = useState("");
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [deletingMfa, setDeletingMfa] = useState(false);
 
   const fetchFactors = async () => {
     const { data } = await supabase.auth.mfa.listFactors();
@@ -54,7 +64,11 @@ function MFASection() {
 
   const startEnroll = async () => {
     setEnrolling(true);
-    const { data, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: "Authenticator App" });
+    const { data, error } = await supabase.auth.mfa.enroll({
+      factorType: "totp",
+      issuer: "SmartPlace Admin",
+      friendlyName: "Google Authenticator",
+    });
     if (error) { toast.error(error.message); setEnrolling(false); return; }
     setQrCode(data.totp.qr_code);
     setSecret(data.totp.secret);
@@ -67,17 +81,58 @@ function MFASection() {
     if (challenge.error) { toast.error(challenge.error.message); return; }
     const verify = await supabase.auth.mfa.verify({ factorId, challengeId: challenge.data.id, code: verifyCode });
     if (verify.error) { toast.error(verify.error.message); return; }
-    toast.success("2FA enabled successfully!");
+    toast.success("2FA enabled with Google Authenticator!");
     await log("mfa_enrolled", "auth");
     setQrCode(null); setSecret(null); setFactorId(null); setVerifyCode(""); setEnrolling(false);
     fetchFactors();
   };
 
-  const unenroll = async (id: string) => {
-    const { error } = await supabase.auth.mfa.unenroll({ factorId: id });
+  const openDeleteDialog = (id: string) => {
+    setDeleteFactorId(id);
+    setDeleteDialogOpen(true);
+    setOtpSent(false);
+    setEmailOtp("");
+  };
+
+  const sendEmailOtp = async () => {
+    if (!user?.email) return;
+    setSendingOtp(true);
+    // Use Supabase's built-in OTP for email verification
+    const { error } = await supabase.auth.signInWithOtp({ email: user.email });
+    setSendingOtp(false);
     if (error) { toast.error(error.message); return; }
-    toast.success("2FA factor removed");
+    setOtpSent(true);
+    toast.success(`Verification code sent to ${user.email}`);
+  };
+
+  const confirmDeleteMfa = async () => {
+    if (!deleteFactorId || !user?.email) return;
+    setDeletingMfa(true);
+
+    // Verify the email OTP first
+    const { error: verifyError } = await supabase.auth.verifyOtp({
+      email: user.email,
+      token: emailOtp,
+      type: "email",
+    });
+
+    if (verifyError) {
+      toast.error("Invalid verification code. Please try again.");
+      setDeletingMfa(false);
+      return;
+    }
+
+    // Now unenroll the MFA factor
+    const { error } = await supabase.auth.mfa.unenroll({ factorId: deleteFactorId });
+    setDeletingMfa(false);
+    if (error) { toast.error(error.message); return; }
+
+    toast.success("2FA has been removed successfully");
     await log("mfa_unenrolled", "auth");
+    setDeleteDialogOpen(false);
+    setDeleteFactorId(null);
+    setEmailOtp("");
+    setOtpSent(false);
     fetchFactors();
   };
 
@@ -86,47 +141,91 @@ function MFASection() {
   if (loading) return <div className="flex justify-center py-8"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Two-Factor Authentication</CardTitle>
-        <CardDescription>Add an extra layer of security with TOTP-based 2FA using an authenticator app</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {verified.length > 0 && (
-          <div className="space-y-2">
-            <p className="text-sm font-medium">Active factors:</p>
-            {verified.map((f) => (
-              <div key={f.id} className="flex items-center justify-between rounded-md border p-3">
-                <div className="flex items-center gap-2">
-                  <Badge variant="default">Enabled</Badge>
-                  <span className="text-sm">{f.friendly_name ?? "TOTP"}</span>
+    <>
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Two-Factor Authentication</CardTitle>
+          <CardDescription>Secure your admin account with Google Authenticator (TOTP-based 2FA)</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {verified.length > 0 && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Active factors:</p>
+              {verified.map((f) => (
+                <div key={f.id} className="flex items-center justify-between rounded-md border p-3">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="default">Enabled</Badge>
+                    <span className="text-sm">{f.friendly_name ?? "Google Authenticator"}</span>
+                  </div>
+                  <Button variant="destructive" size="sm" onClick={() => openDeleteDialog(f.id)}>
+                    <Trash2 className="mr-1 h-3 w-3" /> Remove
+                  </Button>
                 </div>
-                <Button variant="destructive" size="sm" onClick={() => unenroll(f.id)}>Remove</Button>
+              ))}
+            </div>
+          )}
+
+          {!enrolling && verified.length === 0 && (
+            <Button onClick={startEnroll}><KeyRound className="mr-1 h-4 w-4" /> Enable 2FA with Google Authenticator</Button>
+          )}
+
+          {qrCode && (
+            <div className="space-y-4 rounded-lg border p-4">
+              <p className="text-sm font-medium">Scan this QR code with Google Authenticator:</p>
+              <div className="flex justify-center">
+                <img src={qrCode} alt="TOTP QR Code for Google Authenticator" className="h-48 w-48 rounded-lg border p-2 bg-white" />
               </div>
-            ))}
-          </div>
-        )}
-
-        {!enrolling && verified.length === 0 && (
-          <Button onClick={startEnroll}><KeyRound className="mr-1 h-4 w-4" /> Enable 2FA</Button>
-        )}
-
-        {qrCode && (
-          <div className="space-y-4 rounded-lg border p-4">
-            <p className="text-sm font-medium">Scan this QR code with your authenticator app:</p>
-            <div className="flex justify-center">
-              <img src={qrCode} alt="TOTP QR Code" className="h-48 w-48" />
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Can't scan? Enter this key manually in Google Authenticator:</p>
+                <code className="block rounded bg-muted px-3 py-2 text-sm font-mono select-all break-all">{secret}</code>
+              </div>
+              <div className="flex gap-2">
+                <Input placeholder="Enter 6-digit code" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} maxLength={6} className="max-w-[200px]" />
+                <Button onClick={verifyEnroll} disabled={verifyCode.length !== 6}>Verify & Enable</Button>
+                <Button variant="ghost" onClick={() => { setEnrolling(false); setQrCode(null); }}>Cancel</Button>
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">Or enter manually: <code className="rounded bg-muted px-1">{secret}</code></p>
-            <div className="flex gap-2">
-              <Input placeholder="Enter 6-digit code" value={verifyCode} onChange={(e) => setVerifyCode(e.target.value)} maxLength={6} className="max-w-[200px]" />
-              <Button onClick={verifyEnroll} disabled={verifyCode.length !== 6}>Verify & Enable</Button>
-              <Button variant="ghost" onClick={() => { setEnrolling(false); setQrCode(null); }}>Cancel</Button>
-            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Delete 2FA Confirmation Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remove Two-Factor Authentication</DialogTitle>
+            <DialogDescription>
+              For security, verify your identity via email before removing 2FA.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {!otpSent ? (
+              <Button onClick={sendEmailOtp} disabled={sendingOtp} className="w-full">
+                {sendingOtp ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</> : "Send Verification Code to Email"}
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">Enter the 6-digit code sent to <strong>{user?.email}</strong></p>
+                <Input
+                  placeholder="Enter 6-digit email code"
+                  value={emailOtp}
+                  onChange={(e) => setEmailOtp(e.target.value)}
+                  maxLength={6}
+                />
+              </div>
+            )}
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
+            {otpSent && (
+              <Button variant="destructive" onClick={confirmDeleteMfa} disabled={emailOtp.length !== 6 || deletingMfa}>
+                {deletingMfa ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Removing…</> : "Confirm & Remove 2FA"}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 
