@@ -9,7 +9,8 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye } from "lucide-react";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert } from "lucide-react";
 import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -199,6 +200,11 @@ export default function StudentTests() {
   const [explanations, setExplanations] = useState<Record<string, { why_wrong: string; why_right: string }>>({});
   const [loadingExplanations, setLoadingExplanations] = useState(false);
 
+  // Anti-cheat state
+  const [tabSwitchCount, setTabSwitchCount] = useState(0);
+  const [showTabWarning, setShowTabWarning] = useState(false);
+  const tabSwitchRef = useRef(0);
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     const [testsRes, attemptsRes, profileRes] = await Promise.all([
@@ -233,6 +239,47 @@ export default function StudentTests() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [activeTest, submitted]);
 
+  // Anti-cheat: detect tab switching / visibility changes
+  useEffect(() => {
+    if (!activeTest || submitted) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        tabSwitchRef.current += 1;
+        setTabSwitchCount(tabSwitchRef.current);
+
+        if (tabSwitchRef.current === 1) {
+          setShowTabWarning(true);
+          toast.warning("⚠️ Tab switch detected! One more and your test will be auto-submitted.", { duration: 5000 });
+        } else if (tabSwitchRef.current >= 2) {
+          toast.error("🚫 Multiple tab switches detected. Auto-submitting your test.", { duration: 5000 });
+          handleSubmit(true); // auto-submit
+        }
+      }
+    };
+
+    // Prevent copy
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.warning("Copying is disabled during the test.");
+    };
+
+    // Prevent right-click
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("copy", handleCopy);
+    document.addEventListener("contextmenu", handleContextMenu);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("contextmenu", handleContextMenu);
+    };
+  }, [activeTest, submitted]);
+
   const startTest = (test: Test) => {
     const bank = (test.question_bank as unknown as Question[]) ?? [];
     if (bank.length === 0) { toast.error("This test has no questions"); return; }
@@ -247,6 +294,9 @@ export default function StudentTests() {
     setAiFeedback(null);
     setShowReview(false);
     setExplanations({});
+    setTabSwitchCount(0);
+    setShowTabWarning(false);
+    tabSwitchRef.current = 0;
     setActiveTest(test);
     submittingRef.current = false;
   };
@@ -308,7 +358,7 @@ export default function StudentTests() {
     setLoadingFeedback(false);
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (autoSubmitted = false) => {
     if (submittingRef.current || !activeTest || !user) return;
     submittingRef.current = true;
     if (timerRef.current) clearInterval(timerRef.current);
@@ -342,7 +392,7 @@ export default function StudentTests() {
 
     const attemptNum = (attemptCounts[activeTest.id] ?? 0) + 1;
 
-    const { error } = await supabase.from("test_attempts").insert({
+    const insertPayload: Record<string, unknown> = {
       student_id: user.id,
       test_id: activeTest.id,
       answers: JSON.parse(JSON.stringify(answers)),
@@ -352,7 +402,10 @@ export default function StudentTests() {
       attempt_number: attemptNum,
       started_at: new Date(Date.now() - activeTest.duration * 60 * 1000).toISOString(),
       completed_at: new Date().toISOString(),
-    });
+      tab_switches: tabSwitchRef.current,
+      auto_submitted: autoSubmitted,
+    };
+    const { error } = await (supabase.from("test_attempts") as any).insert(insertPayload);
 
     if (error) {
       toast.error("Failed to submit: " + error.message);
@@ -476,6 +529,15 @@ export default function StudentTests() {
           </div>
         </div>
         <Progress value={((currentIdx + 1) / questions.length) * 100} className="h-1 rounded-none" />
+        {showTabWarning && (
+          <Alert variant="destructive" className="mx-6 mt-3">
+            <ShieldAlert className="h-4 w-4" />
+            <AlertTitle>Warning: Tab Switch Detected!</AlertTitle>
+            <AlertDescription>
+              Switching tabs is not allowed during the test. You have {tabSwitchCount}/2 violations. One more will auto-submit your test.
+            </AlertDescription>
+          </Alert>
+        )}
         <div className="flex-1 overflow-auto p-6">
           <div className="mx-auto max-w-2xl space-y-6">
             <div className="space-y-2">
@@ -515,7 +577,7 @@ export default function StudentTests() {
             {currentIdx < questions.length - 1 ? (
               <Button onClick={() => setCurrentIdx(currentIdx + 1)}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
             ) : (
-              <Button onClick={handleSubmit} variant="default">Submit Test</Button>
+              <Button onClick={() => handleSubmit(false)} variant="default">Submit Test</Button>
             )}
           </div>
         </div>
