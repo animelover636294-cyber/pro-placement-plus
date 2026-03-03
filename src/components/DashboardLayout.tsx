@@ -32,6 +32,7 @@ import {
   Shield,
 } from "lucide-react";
 import { toast } from "sonner";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 const adminLinks = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -111,6 +112,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
             </SidebarTrigger>
             <div className="flex items-center gap-3">
               <span className="text-sm text-muted-foreground">{user?.email}</span>
+              <NotificationCenter />
               <ThemeToggle />
               <Button variant="ghost" size="sm" onClick={handleSignOut}>
                 <LogOut className="mr-1 h-4 w-4" /> Sign out
