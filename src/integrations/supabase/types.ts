@@ -110,6 +110,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          link: string | null
+          message: string
+          read: boolean
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message: string
+          read?: boolean
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link?: string | null
+          message?: string
+          read?: boolean
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           branch: string | null
@@ -210,6 +243,7 @@ export type Database = {
         Row: {
           answers: Json | null
           attempt_number: number
+          auto_submitted: boolean
           completed_at: string | null
           created_at: string
           feedback: string | null
@@ -218,12 +252,14 @@ export type Database = {
           scores: Json | null
           started_at: string | null
           student_id: string
+          tab_switches: number
           test_id: string
           total_score: number | null
         }
         Insert: {
           answers?: Json | null
           attempt_number?: number
+          auto_submitted?: boolean
           completed_at?: string | null
           created_at?: string
           feedback?: string | null
@@ -232,12 +268,14 @@ export type Database = {
           scores?: Json | null
           started_at?: string | null
           student_id: string
+          tab_switches?: number
           test_id: string
           total_score?: number | null
         }
         Update: {
           answers?: Json | null
           attempt_number?: number
+          auto_submitted?: boolean
           completed_at?: string | null
           created_at?: string
           feedback?: string | null
@@ -246,6 +284,7 @@ export type Database = {
           scores?: Json | null
           started_at?: string | null
           student_id?: string
+          tab_switches?: number
           test_id?: string
           total_score?: number | null
         }
