@@ -417,6 +417,16 @@ export default function StudentTests() {
     setSubmitted(true);
     fetchData();
 
+    // Send result notification to the student
+    supabase.functions.invoke("send-result-notification", {
+      body: {
+        studentId: user.id,
+        testTitle: activeTest.title,
+        totalScore: scorePercent,
+        passed,
+      },
+    }).catch(() => { /* non-critical */ });
+
     // Generate AI feedback and explanations in parallel
     generateFeedback(activeTest.title, scorePercent, passed, scoresMap);
     generateExplanations(questions, answers);
