@@ -41,21 +41,19 @@ export default function AdminCompanies() {
     const skillsList = form.requiredSkills.split(",").map(s => s.trim()).filter(Boolean);
 
     if (editing) {
-      const { error } = await supabase.from("companies").update({ name: form.name, eligibility_criteria: criteria }).eq("id", editing.id);
+      const { error } = await supabase.from("companies").update({ name: form.name, eligibility_criteria: criteria, skills_priority: skillsList }).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Company updated");
-      // Notify students about eligibility update
       supabase.functions.invoke("send-company-notification", {
         body: { companyName: form.name, action: "updated", eligibility: criteria },
-      }).catch(() => { /* non-critical */ });
+      }).catch(() => {});
     } else {
-      const { error } = await supabase.from("companies").insert({ name: form.name, eligibility_criteria: criteria });
+      const { error } = await supabase.from("companies").insert({ name: form.name, eligibility_criteria: criteria, skills_priority: skillsList });
       if (error) { toast.error(error.message); return; }
       toast.success("Company added");
-      // Notify students about new company
       supabase.functions.invoke("send-company-notification", {
         body: { companyName: form.name, action: "added", eligibility: criteria },
-      }).catch(() => { /* non-critical */ });
+      }).catch(() => {});
     }
     setOpen(false);
     resetForm();
