@@ -122,6 +122,7 @@ export default function StudentProfile() {
       current_semester: currentSemester,
       marks_cards: JSON.parse(JSON.stringify(marksCards)),
       sgpas: JSON.parse(JSON.stringify(sgpas)),
+      skills: form.skills.split(",").map(s => s.trim()).filter(Boolean),
     } as Record<string, unknown>).eq("id", user.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
