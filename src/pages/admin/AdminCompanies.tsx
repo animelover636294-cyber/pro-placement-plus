@@ -17,7 +17,7 @@ export default function AdminCompanies() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
-  const [form, setForm] = useState({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "" });
+  const [form, setForm] = useState({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "", requiredSkills: "" });
 
   const fetchCompanies = async () => {
     const { data } = await supabase.from("companies").select("*").order("created_at", { ascending: false });
