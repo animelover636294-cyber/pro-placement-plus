@@ -35,7 +35,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 
 export default function StudentProfile() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ name: "", yearOfPassing: "", usn: "", branch: "" });
+  const [form, setForm] = useState({ name: "", yearOfPassing: "", usn: "", branch: "", skills: "" });
   const [completion, setCompletion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
