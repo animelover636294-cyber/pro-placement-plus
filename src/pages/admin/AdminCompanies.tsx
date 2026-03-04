@@ -137,11 +137,12 @@ export default function AdminCompanies() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+             <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Min CGPA</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Skills Cutoff</TableHead>
+                <TableHead>Required Skills</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
