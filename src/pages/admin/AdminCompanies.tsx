@@ -117,6 +117,11 @@ export default function AdminCompanies() {
                   <Input type="number" value={form.skillsCutoff} onChange={(e) => setForm({ ...form, skillsCutoff: e.target.value })} />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Required Skills</Label>
+                <Input value={form.requiredSkills} onChange={(e) => setForm({ ...form, requiredSkills: e.target.value })} placeholder="e.g. Java, Python, React (comma separated)" />
+                <p className="text-xs text-muted-foreground">Comma-separated list of skills the company requires</p>
+              </div>
               <Button onClick={handleSave} className="w-full">{editing ? "Update" : "Add"}</Button>
             </div>
           </DialogContent>
