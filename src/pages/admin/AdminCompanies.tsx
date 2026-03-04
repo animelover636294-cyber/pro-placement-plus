@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Company = Tables<"companies">;
@@ -17,7 +18,7 @@ export default function AdminCompanies() {
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Company | null>(null);
-  const [form, setForm] = useState({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "" });
+  const [form, setForm] = useState({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "", requiredSkills: "" });
 
   const fetchCompanies = async () => {
     const { data } = await supabase.from("companies").select("*").order("created_at", { ascending: false });
@@ -27,7 +28,7 @@ export default function AdminCompanies() {
   useEffect(() => { fetchCompanies(); }, []);
 
   const resetForm = () => {
-    setForm({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "" });
+    setForm({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "", requiredSkills: "" });
     setEditing(null);
   };
 
@@ -38,23 +39,22 @@ export default function AdminCompanies() {
       year_of_passing: parseInt(form.yearOfPassing) || 0,
       skills_cutoff: parseFloat(form.skillsCutoff) || 0,
     };
+    const skillsList = form.requiredSkills.split(",").map(s => s.trim()).filter(Boolean);
 
     if (editing) {
-      const { error } = await supabase.from("companies").update({ name: form.name, eligibility_criteria: criteria }).eq("id", editing.id);
+      const { error } = await supabase.from("companies").update({ name: form.name, eligibility_criteria: criteria, skills_priority: skillsList }).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Company updated");
-      // Notify students about eligibility update
       supabase.functions.invoke("send-company-notification", {
         body: { companyName: form.name, action: "updated", eligibility: criteria },
-      }).catch(() => { /* non-critical */ });
+      }).catch(() => {});
     } else {
-      const { error } = await supabase.from("companies").insert({ name: form.name, eligibility_criteria: criteria });
+      const { error } = await supabase.from("companies").insert({ name: form.name, eligibility_criteria: criteria, skills_priority: skillsList });
       if (error) { toast.error(error.message); return; }
       toast.success("Company added");
-      // Notify students about new company
       supabase.functions.invoke("send-company-notification", {
         body: { companyName: form.name, action: "added", eligibility: criteria },
-      }).catch(() => { /* non-critical */ });
+      }).catch(() => {});
     }
     setOpen(false);
     resetForm();
@@ -63,11 +63,13 @@ export default function AdminCompanies() {
 
   const handleEdit = (c: Company) => {
     const criteria = (c.eligibility_criteria as Record<string, number>) ?? {};
+    const skills = (c.skills_priority as string[]) ?? [];
     setForm({
       name: c.name,
       minCgpa: String(criteria.min_cgpa ?? ""),
       yearOfPassing: String(criteria.year_of_passing ?? ""),
       skillsCutoff: String(criteria.skills_cutoff ?? ""),
+      requiredSkills: skills.join(", "),
     });
     setEditing(c);
     setOpen(true);
@@ -116,6 +118,11 @@ export default function AdminCompanies() {
                   <Input type="number" value={form.skillsCutoff} onChange={(e) => setForm({ ...form, skillsCutoff: e.target.value })} />
                 </div>
               </div>
+              <div className="space-y-2">
+                <Label>Required Skills</Label>
+                <Input value={form.requiredSkills} onChange={(e) => setForm({ ...form, requiredSkills: e.target.value })} placeholder="e.g. Java, Python, React (comma separated)" />
+                <p className="text-xs text-muted-foreground">Comma-separated list of skills the company requires</p>
+              </div>
               <Button onClick={handleSave} className="w-full">{editing ? "Update" : "Add"}</Button>
             </div>
           </DialogContent>
@@ -131,23 +138,32 @@ export default function AdminCompanies() {
         <CardContent className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
+             <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Min CGPA</TableHead>
                 <TableHead>Year</TableHead>
                 <TableHead>Skills Cutoff</TableHead>
+                <TableHead>Required Skills</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.map((c) => {
                 const criteria = (c.eligibility_criteria as Record<string, number>) ?? {};
+                const skills = (c.skills_priority as string[]) ?? [];
                 return (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{criteria.min_cgpa ?? "—"}</TableCell>
                     <TableCell>{criteria.year_of_passing ?? "—"}</TableCell>
                     <TableCell>{criteria.skills_cutoff ? `${criteria.skills_cutoff}%` : "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {skills.length > 0 ? skills.map((s, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">{s}</Badge>
+                        )) : "—"}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil className="h-4 w-4" /></Button>
@@ -159,7 +175,7 @@ export default function AdminCompanies() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No companies found</TableCell>
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">No companies found</TableCell>
                 </TableRow>
               )}
             </TableBody>

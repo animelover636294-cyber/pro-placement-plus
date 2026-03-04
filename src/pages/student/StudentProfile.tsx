@@ -35,7 +35,7 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 
 export default function StudentProfile() {
   const { user } = useAuth();
-  const [form, setForm] = useState({ name: "", yearOfPassing: "", usn: "", branch: "" });
+  const [form, setForm] = useState({ name: "", yearOfPassing: "", usn: "", branch: "", skills: "" });
   const [completion, setCompletion] = useState(0);
   const [saving, setSaving] = useState(false);
   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
@@ -59,6 +59,7 @@ export default function StudentProfile() {
           yearOfPassing: d.year_of_passing ? String(d.year_of_passing) : "",
           usn: (d.usn as string) ?? "",
           branch: (d.branch as string) ?? "",
+          skills: ((d.skills as string[]) ?? []).join(", "),
         });
         setCompletion((d.profile_completion_percentage as number) ?? 0);
         setResumeUrl(d.resume_url as string | null);
@@ -84,11 +85,12 @@ export default function StudentProfile() {
   const calcCompletion = () => {
     let score = 0;
     const fields = [form.name.trim(), form.yearOfPassing, form.usn.trim(), form.branch.trim()];
-    const totalFields = fields.length + 2; // +1 for resume, +1 for marks cards
+    const totalFields = fields.length + 3; // +1 resume, +1 marks cards, +1 skills
     const perField = 100 / totalFields;
     fields.forEach((f) => { if (f) score += perField; });
     if (resumeUrl) score += perField;
     if (marksCards.length > 0) score += perField;
+    if (form.skills.trim()) score += perField;
     return Math.min(Math.round(score), 100);
   };
 
@@ -120,6 +122,7 @@ export default function StudentProfile() {
       current_semester: currentSemester,
       marks_cards: JSON.parse(JSON.stringify(marksCards)),
       sgpas: JSON.parse(JSON.stringify(sgpas)),
+      skills: form.skills.split(",").map(s => s.trim()).filter(Boolean),
     } as Record<string, unknown>).eq("id", user.id);
     setSaving(false);
     if (error) { toast.error(error.message); return; }
@@ -280,6 +283,11 @@ export default function StudentProfile() {
           <div className="space-y-2">
             <Label>Year of Passing</Label>
             <Input type="number" value={form.yearOfPassing} onChange={(e) => setForm({ ...form, yearOfPassing: e.target.value })} />
+          </div>
+          <div className="space-y-2">
+            <Label>Skills</Label>
+            <Input value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} placeholder="e.g. Java, Python, React, SQL (comma separated)" />
+            <p className="text-xs text-muted-foreground">Add your technical skills to check company eligibility</p>
           </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save Profile"}
