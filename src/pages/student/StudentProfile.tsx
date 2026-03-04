@@ -284,6 +284,11 @@ export default function StudentProfile() {
             <Label>Year of Passing</Label>
             <Input type="number" value={form.yearOfPassing} onChange={(e) => setForm({ ...form, yearOfPassing: e.target.value })} />
           </div>
+          <div className="space-y-2">
+            <Label>Skills</Label>
+            <Input value={form.skills} onChange={(e) => setForm({ ...form, skills: e.target.value })} placeholder="e.g. Java, Python, React, SQL (comma separated)" />
+            <p className="text-xs text-muted-foreground">Add your technical skills to check company eligibility</p>
+          </div>
           <Button onClick={handleSave} disabled={saving}>
             {saving ? "Saving…" : "Save Profile"}
           </Button>

@@ -88,6 +88,8 @@ export default function StudentDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      <EligibilityChecker />
     </div>
   );
 }

@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 import { Plus, Pencil, Trash2, Search } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Company = Tables<"companies">;
