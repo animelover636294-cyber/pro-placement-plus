@@ -85,11 +85,12 @@ export default function StudentProfile() {
   const calcCompletion = () => {
     let score = 0;
     const fields = [form.name.trim(), form.yearOfPassing, form.usn.trim(), form.branch.trim()];
-    const totalFields = fields.length + 2; // +1 for resume, +1 for marks cards
+    const totalFields = fields.length + 3; // +1 resume, +1 marks cards, +1 skills
     const perField = 100 / totalFields;
     fields.forEach((f) => { if (f) score += perField; });
     if (resumeUrl) score += perField;
     if (marksCards.length > 0) score += perField;
+    if (form.skills.trim()) score += perField;
     return Math.min(Math.round(score), 100);
   };
 
