@@ -27,7 +27,7 @@ export default function AdminCompanies() {
   useEffect(() => { fetchCompanies(); }, []);
 
   const resetForm = () => {
-    setForm({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "" });
+    setForm({ name: "", minCgpa: "", yearOfPassing: "", skillsCutoff: "", requiredSkills: "" });
     setEditing(null);
   };
 
