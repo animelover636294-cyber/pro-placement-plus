@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { CalendarDays, Trophy, ClipboardList, UserCircle } from "lucide-react";
+import { EligibilityChecker } from "@/components/EligibilityChecker";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
