@@ -38,6 +38,7 @@ export default function AdminCompanies() {
       year_of_passing: parseInt(form.yearOfPassing) || 0,
       skills_cutoff: parseFloat(form.skillsCutoff) || 0,
     };
+    const skillsList = form.requiredSkills.split(",").map(s => s.trim()).filter(Boolean);
 
     if (editing) {
       const { error } = await supabase.from("companies").update({ name: form.name, eligibility_criteria: criteria }).eq("id", editing.id);
