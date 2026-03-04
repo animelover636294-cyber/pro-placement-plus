@@ -157,6 +157,7 @@ export type Database = {
           profile_completion_percentage: number | null
           resume_url: string | null
           sgpas: Json | null
+          skills: string[] | null
           updated_at: string
           usn: string | null
           year_of_passing: number | null
@@ -174,6 +175,7 @@ export type Database = {
           profile_completion_percentage?: number | null
           resume_url?: string | null
           sgpas?: Json | null
+          skills?: string[] | null
           updated_at?: string
           usn?: string | null
           year_of_passing?: number | null
@@ -191,6 +193,7 @@ export type Database = {
           profile_completion_percentage?: number | null
           resume_url?: string | null
           sgpas?: Json | null
+          skills?: string[] | null
           updated_at?: string
           usn?: string | null
           year_of_passing?: number | null
