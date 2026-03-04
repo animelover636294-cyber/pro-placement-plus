@@ -62,11 +62,13 @@ export default function AdminCompanies() {
 
   const handleEdit = (c: Company) => {
     const criteria = (c.eligibility_criteria as Record<string, number>) ?? {};
+    const skills = (c.skills_priority as string[]) ?? [];
     setForm({
       name: c.name,
       minCgpa: String(criteria.min_cgpa ?? ""),
       yearOfPassing: String(criteria.year_of_passing ?? ""),
       skillsCutoff: String(criteria.skills_cutoff ?? ""),
+      requiredSkills: skills.join(", "),
     });
     setEditing(c);
     setOpen(true);
