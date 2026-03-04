@@ -149,12 +149,20 @@ export default function AdminCompanies() {
             <TableBody>
               {filtered.map((c) => {
                 const criteria = (c.eligibility_criteria as Record<string, number>) ?? {};
+                const skills = (c.skills_priority as string[]) ?? [];
                 return (
                   <TableRow key={c.id}>
                     <TableCell className="font-medium">{c.name}</TableCell>
                     <TableCell>{criteria.min_cgpa ?? "—"}</TableCell>
                     <TableCell>{criteria.year_of_passing ?? "—"}</TableCell>
                     <TableCell>{criteria.skills_cutoff ? `${criteria.skills_cutoff}%` : "—"}</TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-1">
+                        {skills.length > 0 ? skills.map((s, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs">{s}</Badge>
+                        )) : "—"}
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <div className="flex gap-1">
                         <Button variant="ghost" size="icon" onClick={() => handleEdit(c)}><Pencil className="h-4 w-4" /></Button>
@@ -166,7 +174,7 @@ export default function AdminCompanies() {
               })}
               {filtered.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No companies found</TableCell>
+                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">No companies found</TableCell>
                 </TableRow>
               )}
             </TableBody>
