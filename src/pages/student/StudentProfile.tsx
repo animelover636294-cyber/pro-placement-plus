@@ -59,6 +59,7 @@ export default function StudentProfile() {
           yearOfPassing: d.year_of_passing ? String(d.year_of_passing) : "",
           usn: (d.usn as string) ?? "",
           branch: (d.branch as string) ?? "",
+          skills: ((d.skills as string[]) ?? []).join(", "),
         });
         setCompletion((d.profile_completion_percentage as number) ?? 0);
         setResumeUrl(d.resume_url as string | null);
