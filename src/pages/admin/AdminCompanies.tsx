@@ -43,10 +43,18 @@ export default function AdminCompanies() {
       const { error } = await supabase.from("companies").update({ name: form.name, eligibility_criteria: criteria }).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Company updated");
+      // Notify students about eligibility update
+      supabase.functions.invoke("send-company-notification", {
+        body: { companyName: form.name, action: "updated", eligibility: criteria },
+      }).catch(() => { /* non-critical */ });
     } else {
       const { error } = await supabase.from("companies").insert({ name: form.name, eligibility_criteria: criteria });
       if (error) { toast.error(error.message); return; }
       toast.success("Company added");
+      // Notify students about new company
+      supabase.functions.invoke("send-company-notification", {
+        body: { companyName: form.name, action: "added", eligibility: criteria },
+      }).catch(() => { /* non-critical */ });
     }
     setOpen(false);
     resetForm();
