@@ -49,6 +49,7 @@ const adminLinks = [
 
 const studentLinks = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Companies", url: "/dashboard/companies", icon: Building2 },
   { title: "My Tests", url: "/dashboard/tests", icon: ClipboardList },
   { title: "Results", url: "/dashboard/results", icon: Trophy },
   { title: "Schedule", url: "/dashboard/schedule", icon: CalendarDays },
