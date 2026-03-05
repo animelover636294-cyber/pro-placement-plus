@@ -114,7 +114,8 @@ supabase/
 ### Authentication
 - Email/password signup and login
 - Email verification required
-- Password reset flow
+- Password reset with email OTP verification code (via Resend)
+- Transactional email notifications for test results, company visits, and eligibility updates
 - Auto-profile creation on signup via database trigger
 
 ## Environment Variables
