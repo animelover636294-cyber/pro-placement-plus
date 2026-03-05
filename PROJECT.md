@@ -46,10 +46,13 @@ supabase/
     ├── extract-questions-pdf/    # PDF question extraction
     ├── generate-feedback/        # AI-powered test feedback
     ├── generate-questions/       # AI question generation
-    ├── send-company-notification/ # Company update alerts
-    ├── send-result-notification/  # Test result alerts
-    ├── send-test-notification/    # New test scheduled alerts
-    └── verify-markscard/          # Marks card verification
+    ├── send-company-notification/ # Company update alerts (in-app + email)
+    ├── send-email/                # Generic Resend email sender
+    ├── send-reset-code/           # Password reset OTP via email
+    ├── send-result-notification/  # Test result alerts (in-app + email)
+    ├── send-test-notification/    # New test scheduled alerts (in-app + email)
+    ├── verify-markscard/          # Marks card verification
+    └── verify-reset-code/         # Verify OTP and reset password
 ```
 
 ## Database Schema
@@ -65,6 +68,7 @@ supabase/
 | `test_attempts` | Student test submissions, scores, anti-cheat data |
 | `schedules` | Student-test registration tracking |
 | `notifications` | In-app notification system |
+| `password_reset_codes` | OTP codes for password reset via email |
 | `audit_logs` | Admin action audit trail |
 | `admin_invites` | Secure admin invitation tokens |
 
@@ -110,7 +114,8 @@ supabase/
 ### Authentication
 - Email/password signup and login
 - Email verification required
-- Password reset flow
+- Password reset with email OTP verification code (via Resend)
+- Transactional email notifications for test results, company visits, and eligibility updates
 - Auto-profile creation on signup via database trigger
 
 ## Environment Variables
@@ -128,6 +133,7 @@ supabase/
 | `SUPABASE_URL` | Internal Supabase URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for admin-level DB access |
 | `SUPABASE_ANON_KEY` | Anon key for edge functions |
+| `RESEND_API_KEY` | Resend API key for transactional email notifications |
 | `LOVABLE_API_KEY` | AI gateway key for feedback/question generation |
 
 ## Storage Buckets

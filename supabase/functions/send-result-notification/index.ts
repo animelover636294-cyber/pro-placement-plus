@@ -4,6 +4,7 @@ const corsHeaders = {
 };
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from 'npm:resend@6';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -27,6 +28,7 @@ Deno.serve(async (req) => {
     const emoji = passed ? '🎉' : '📊';
     const status = passed ? 'Passed' : 'Failed';
 
+    // In-app notification
     const { error } = await supabase.from('notifications').insert({
       user_id: studentId,
       title: `${emoji} Test Results Ready`,
@@ -36,6 +38,36 @@ Deno.serve(async (req) => {
     });
 
     if (error) throw error;
+
+    // Send email notification
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, name')
+        .eq('id', studentId)
+        .maybeSingle();
+
+      if (profile?.email) {
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+        await resend.emails.send({
+          from: 'SmartPlace <onboarding@resend.dev>',
+          to: profile.email,
+          subject: `${emoji} Test Results: ${testTitle}`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+              <h2 style="color: #1a1a2e;">Hi ${profile.name || 'Student'},</h2>
+              <p style="color: #555; line-height: 1.6;">Your results for <strong>"${testTitle}"</strong> are ready.</p>
+              <div style="background: ${passed ? '#dcfce7' : '#fef2f2'}; border-radius: 8px; padding: 20px; text-align: center; margin: 20px 0;">
+                <p style="font-size: 24px; font-weight: bold; color: ${passed ? '#166534' : '#991b1b'};">${totalScore}% — ${status}</p>
+              </div>
+              <p style="color: #888; font-size: 14px;">Log in to SmartPlace to view detailed feedback.</p>
+            </div>
+          `,
+        });
+      }
+    } catch (emailErr) {
+      console.error('Email send failed (non-blocking):', emailErr);
+    }
 
     console.log(`Result notification sent to student ${studentId} for test: ${testTitle}`);
 

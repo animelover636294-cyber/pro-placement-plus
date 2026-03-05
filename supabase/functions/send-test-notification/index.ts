@@ -4,6 +4,7 @@ const corsHeaders = {
 };
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { Resend } from 'npm:resend@6';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -17,7 +18,6 @@ Deno.serve(async (req) => {
     const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-    // Fetch all student user IDs
     const { data: studentRoles, error: rolesError } = await supabase
       .from('user_roles')
       .select('user_id')
@@ -33,7 +33,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Create in-app notifications for all students
+    // In-app notifications
     const notifications = studentIds.map(userId => ({
       user_id: userId,
       title: '📝 New Test Scheduled',
@@ -42,21 +42,49 @@ Deno.serve(async (req) => {
       link: '/dashboard/tests',
     }));
 
-    const { error: insertError } = await supabase
-      .from('notifications')
-      .insert(notifications);
-
+    const { error: insertError } = await supabase.from('notifications').insert(notifications);
     if (insertError) throw insertError;
 
-    console.log(`Created ${studentIds.length} in-app notifications for test: ${testTitle}`);
+    // Send email notifications
+    try {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, name')
+        .in('id', studentIds);
 
-    return new Response(JSON.stringify({
-      success: true,
-      notifiedCount: studentIds.length,
-    }), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      if (profiles && profiles.length > 0) {
+        const resend = new Resend(Deno.env.get('RESEND_API_KEY'));
+        const emailPromises = profiles
+          .filter(p => p.email)
+          .map(p =>
+            resend.emails.send({
+              from: 'SmartPlace <onboarding@resend.dev>',
+              to: p.email!,
+              subject: `📝 New Test Scheduled: ${testTitle}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+                  <h2 style="color: #1a1a2e;">Hi ${p.name || 'Student'},</h2>
+                  <p style="color: #555; line-height: 1.6;">A new test <strong>"${testTitle}"</strong> has been scheduled for <strong>${scheduledDate}</strong>.</p>
+                  <p style="color: #555;">Log in to SmartPlace to prepare and take the test.</p>
+                </div>
+              `,
+            })
+          );
+        await Promise.allSettled(emailPromises);
+      }
+    } catch (emailErr) {
+      console.error('Email batch send failed (non-blocking):', emailErr);
+    }
+
+    console.log(`Created ${studentIds.length} notifications for test: ${testTitle}`);
+
+    return new Response(JSON.stringify({ success: true, notifiedCount: studentIds.length }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     return new Response(JSON.stringify({ error: (error as Error).message }), {
-      status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   }
 });
