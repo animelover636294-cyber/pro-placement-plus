@@ -23,11 +23,13 @@ export default function AdminSettings() {
       <Tabs defaultValue="mfa">
         <TabsList>
           <TabsTrigger value="mfa"><KeyRound className="mr-1 h-4 w-4" /> Two-Factor Auth</TabsTrigger>
+          <TabsTrigger value="password"><Shield className="mr-1 h-4 w-4" /> Change Password</TabsTrigger>
           <TabsTrigger value="invites"><UserPlus className="mr-1 h-4 w-4" /> Admin Invites</TabsTrigger>
           <TabsTrigger value="audit"><ScrollText className="mr-1 h-4 w-4" /> Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mfa"><MFASection /></TabsContent>
+        <TabsContent value="password"><AdminPasswordReset /></TabsContent>
         <TabsContent value="invites"><InviteSection /></TabsContent>
         <TabsContent value="audit"><AuditSection /></TabsContent>
       </Tabs>
@@ -226,6 +228,147 @@ function MFASection() {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+function AdminPasswordReset() {
+  const { user } = useAuth();
+  const [step, setStep] = useState<"start" | "verify" | "newpass">("start");
+  const [emailOtp, setEmailOtp] = useState("");
+  const [totpCode, setTotpCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [hasMfa, setHasMfa] = useState(false);
+  const { log } = useAuditLog();
+
+  useEffect(() => {
+    supabase.auth.mfa.listFactors().then(({ data }) => {
+      const verified = (data?.totp ?? []).filter((f: any) => f.status === "verified");
+      setHasMfa(verified.length > 0);
+    });
+  }, []);
+
+  const sendOtp = async () => {
+    if (!user?.email) return;
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({ email: user.email });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Verification code sent to your email");
+    setStep("verify");
+  };
+
+  const verifyBoth = async () => {
+    if (!user?.email) return;
+    setLoading(true);
+
+    // Verify email OTP
+    const { error: otpError } = await supabase.auth.verifyOtp({
+      email: user.email,
+      token: emailOtp,
+      type: "email",
+    });
+    if (otpError) {
+      toast.error("Invalid email verification code");
+      setLoading(false);
+      return;
+    }
+
+    // Verify TOTP if MFA is enabled
+    if (hasMfa) {
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const factor = (factors?.totp ?? []).find((f: any) => f.status === "verified");
+      if (factor) {
+        const { data: challenge, error: chalError } = await supabase.auth.mfa.challenge({ factorId: factor.id });
+        if (chalError) { toast.error(chalError.message); setLoading(false); return; }
+        const { error: verError } = await supabase.auth.mfa.verify({
+          factorId: factor.id,
+          challengeId: challenge.id,
+          code: totpCode,
+        });
+        if (verError) {
+          toast.error("Invalid 2FA code");
+          setLoading(false);
+          return;
+        }
+      }
+    }
+
+    setLoading(false);
+    toast.success("Identity verified!");
+    setStep("newpass");
+  };
+
+  const changePassword = async () => {
+    if (newPassword !== confirmPassword) { toast.error("Passwords don't match"); return; }
+    if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    setLoading(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+    if (error) { toast.error(error.message); return; }
+    toast.success("Password changed successfully!");
+    await log("password_changed", "auth");
+    setStep("start");
+    setEmailOtp("");
+    setTotpCode("");
+    setNewPassword("");
+    setConfirmPassword("");
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2"><Shield className="h-5 w-5" /> Change Password</CardTitle>
+        <CardDescription>
+          {hasMfa
+            ? "Both email verification and 2FA code are required to change your password"
+            : "Email verification is required to change your password"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {step === "start" && (
+          <Button onClick={sendOtp} disabled={loading}>
+            {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Sending…</> : "Start Password Change"}
+          </Button>
+        )}
+
+        {step === "verify" && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Email Verification Code</Label>
+              <p className="text-sm text-muted-foreground">Enter the code sent to <strong>{user?.email}</strong></p>
+              <Input value={emailOtp} onChange={(e) => setEmailOtp(e.target.value)} placeholder="6-digit code" maxLength={6} />
+            </div>
+            {hasMfa && (
+              <div className="space-y-2">
+                <Label>2FA Code (Google Authenticator)</Label>
+                <Input value={totpCode} onChange={(e) => setTotpCode(e.target.value)} placeholder="6-digit 2FA code" maxLength={6} />
+              </div>
+            )}
+            <Button onClick={verifyBoth} disabled={loading || emailOtp.length !== 6 || (hasMfa && totpCode.length !== 6)}>
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying…</> : "Verify Identity"}
+            </Button>
+          </div>
+        )}
+
+        {step === "newpass" && (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>New Password</Label>
+              <Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" minLength={6} />
+            </div>
+            <div className="space-y-2">
+              <Label>Confirm Password</Label>
+              <Input type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} placeholder="Repeat password" minLength={6} />
+            </div>
+            <Button onClick={changePassword} disabled={loading || !newPassword || !confirmPassword}>
+              {loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Changing…</> : "Change Password"}
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

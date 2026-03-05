@@ -1,5 +1,7 @@
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
+import { useAdminSessionTimeout, getAdminResumeRoute, clearAdminResumeRoute } from "@/hooks/useSessionTimeout";
 import { NavLink } from "@/components/NavLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -47,6 +49,7 @@ const adminLinks = [
 
 const studentLinks = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
+  { title: "Companies", url: "/dashboard/companies", icon: Building2 },
   { title: "My Tests", url: "/dashboard/tests", icon: ClipboardList },
   { title: "Results", url: "/dashboard/results", icon: Trophy },
   { title: "Schedule", url: "/dashboard/schedule", icon: CalendarDays },
@@ -95,7 +98,21 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { role, signOut, user } = useAuth();
   const isAdmin = role === "admin";
+  const navigate = useNavigate();
 
+  // Admin session timeout
+  useAdminSessionTimeout();
+
+  // Admin resume route after re-login
+  useEffect(() => {
+    if (isAdmin) {
+      const resumeRoute = getAdminResumeRoute();
+      if (resumeRoute && resumeRoute !== window.location.pathname) {
+        clearAdminResumeRoute();
+        navigate(resumeRoute, { replace: true });
+      }
+    }
+  }, [isAdmin, navigate]);
   const handleSignOut = async () => {
     await signOut();
     toast.success("Signed out");
