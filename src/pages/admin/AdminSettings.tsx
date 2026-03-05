@@ -23,11 +23,13 @@ export default function AdminSettings() {
       <Tabs defaultValue="mfa">
         <TabsList>
           <TabsTrigger value="mfa"><KeyRound className="mr-1 h-4 w-4" /> Two-Factor Auth</TabsTrigger>
+          <TabsTrigger value="password"><Shield className="mr-1 h-4 w-4" /> Change Password</TabsTrigger>
           <TabsTrigger value="invites"><UserPlus className="mr-1 h-4 w-4" /> Admin Invites</TabsTrigger>
           <TabsTrigger value="audit"><ScrollText className="mr-1 h-4 w-4" /> Audit Log</TabsTrigger>
         </TabsList>
 
         <TabsContent value="mfa"><MFASection /></TabsContent>
+        <TabsContent value="password"><AdminPasswordReset /></TabsContent>
         <TabsContent value="invites"><InviteSection /></TabsContent>
         <TabsContent value="audit"><AuditSection /></TabsContent>
       </Tabs>
