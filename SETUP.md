@@ -70,6 +70,7 @@ In your Supabase project dashboard, go to **Settings → Edge Functions → Secr
 | `SUPABASE_URL` | Your Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Your service role key (Settings → API → service_role key) |
 | `SUPABASE_ANON_KEY` | Your anon key |
+| `RESEND_API_KEY` | Your Resend API key for email notifications |
 
 > **For AI features** (question generation, feedback): You'll also need a `LOVABLE_API_KEY`. If you don't have one, those features will gracefully degrade — tests can still be created manually.
 
@@ -81,9 +82,12 @@ supabase functions deploy extract-questions-pdf
 supabase functions deploy generate-feedback
 supabase functions deploy generate-questions
 supabase functions deploy send-company-notification
+supabase functions deploy send-email
+supabase functions deploy send-reset-code
 supabase functions deploy send-result-notification
 supabase functions deploy send-test-notification
 supabase functions deploy verify-markscard
+supabase functions deploy verify-reset-code
 ```
 
 Or deploy all at once:

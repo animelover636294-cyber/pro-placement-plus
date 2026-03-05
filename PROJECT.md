@@ -133,6 +133,7 @@ supabase/
 | `SUPABASE_URL` | Internal Supabase URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service role key for admin-level DB access |
 | `SUPABASE_ANON_KEY` | Anon key for edge functions |
+| `RESEND_API_KEY` | Resend API key for transactional email notifications |
 | `LOVABLE_API_KEY` | AI gateway key for feedback/question generation |
 
 ## Storage Buckets
