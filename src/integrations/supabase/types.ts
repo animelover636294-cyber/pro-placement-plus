@@ -79,31 +79,61 @@ export type Database = {
       }
       companies: {
         Row: {
+          allowed_branches: string[] | null
+          bond_details: string | null
           contact_info: Json | null
           created_at: string
+          description: string | null
           eligibility_criteria: Json | null
           id: string
+          job_location: string | null
+          job_role: string | null
+          job_type: string | null
+          max_backlogs: number | null
           name: string
+          requirements: string[] | null
+          salary_package: string | null
+          selection_process: string[] | null
           skills_priority: Json | null
           test_date: string | null
           updated_at: string
         }
         Insert: {
+          allowed_branches?: string[] | null
+          bond_details?: string | null
           contact_info?: Json | null
           created_at?: string
+          description?: string | null
           eligibility_criteria?: Json | null
           id?: string
+          job_location?: string | null
+          job_role?: string | null
+          job_type?: string | null
+          max_backlogs?: number | null
           name: string
+          requirements?: string[] | null
+          salary_package?: string | null
+          selection_process?: string[] | null
           skills_priority?: Json | null
           test_date?: string | null
           updated_at?: string
         }
         Update: {
+          allowed_branches?: string[] | null
+          bond_details?: string | null
           contact_info?: Json | null
           created_at?: string
+          description?: string | null
           eligibility_criteria?: Json | null
           id?: string
+          job_location?: string | null
+          job_role?: string | null
+          job_type?: string | null
+          max_backlogs?: number | null
           name?: string
+          requirements?: string[] | null
+          salary_package?: string | null
+          selection_process?: string[] | null
           skills_priority?: Json | null
           test_date?: string | null
           updated_at?: string
