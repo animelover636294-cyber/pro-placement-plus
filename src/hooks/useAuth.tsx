@@ -50,13 +50,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchRole(session.user.id);
+        // Check student session guard: if no sessionStorage flag, they need to re-login
+        const isReturning = !sessionStorage.getItem("student_session_active");
+        fetchRole(session.user.id).then(() => {
+          // We'll handle the logout in a separate effect after role is loaded
+        });
+        if (isReturning) {
+          // Mark that we need to check if student should be logged out
+          sessionStorage.setItem("_check_student_session", "true");
+        }
       }
       setLoading(false);
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  // Student session guard: log out students who closed their browser
+  useEffect(() => {
+    if (loading || !user || !role) return;
+    const needsCheck = sessionStorage.getItem("_check_student_session");
+    if (needsCheck && role === "student") {
+      sessionStorage.removeItem("_check_student_session");
+      // Student is returning after closing browser - sign them out
+      supabase.auth.signOut();
+      return;
+    }
+    if (needsCheck) {
+      sessionStorage.removeItem("_check_student_session");
+    }
+    // Mark session as active for students
+    if (role === "student") {
+      sessionStorage.setItem("student_session_active", "true");
+    }
+  }, [loading, user, role]);
 
   const signUp = async (email: string, password: string, name: string) => {
     const { error } = await supabase.auth.signUp({
@@ -76,6 +103,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    sessionStorage.removeItem("student_session_active");
     await supabase.auth.signOut();
   };
 
