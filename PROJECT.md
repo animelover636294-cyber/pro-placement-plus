@@ -46,10 +46,13 @@ supabase/
     ├── extract-questions-pdf/    # PDF question extraction
     ├── generate-feedback/        # AI-powered test feedback
     ├── generate-questions/       # AI question generation
-    ├── send-company-notification/ # Company update alerts
-    ├── send-result-notification/  # Test result alerts
-    ├── send-test-notification/    # New test scheduled alerts
-    └── verify-markscard/          # Marks card verification
+    ├── send-company-notification/ # Company update alerts (in-app + email)
+    ├── send-email/                # Generic Resend email sender
+    ├── send-reset-code/           # Password reset OTP via email
+    ├── send-result-notification/  # Test result alerts (in-app + email)
+    ├── send-test-notification/    # New test scheduled alerts (in-app + email)
+    ├── verify-markscard/          # Marks card verification
+    └── verify-reset-code/         # Verify OTP and reset password
 ```
 
 ## Database Schema
