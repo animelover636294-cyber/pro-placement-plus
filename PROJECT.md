@@ -68,6 +68,7 @@ supabase/
 | `test_attempts` | Student test submissions, scores, anti-cheat data |
 | `schedules` | Student-test registration tracking |
 | `notifications` | In-app notification system |
+| `password_reset_codes` | OTP codes for password reset via email |
 | `audit_logs` | Admin action audit trail |
 | `admin_invites` | Secure admin invitation tokens |
 
