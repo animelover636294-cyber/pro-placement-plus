@@ -98,7 +98,21 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const { role, signOut, user } = useAuth();
   const isAdmin = role === "admin";
+  const navigate = useNavigate();
 
+  // Admin session timeout
+  useAdminSessionTimeout();
+
+  // Admin resume route after re-login
+  useEffect(() => {
+    if (isAdmin) {
+      const resumeRoute = getAdminResumeRoute();
+      if (resumeRoute && resumeRoute !== window.location.pathname) {
+        clearAdminResumeRoute();
+        navigate(resumeRoute, { replace: true });
+      }
+    }
+  }, [isAdmin, navigate]);
   const handleSignOut = async () => {
     await signOut();
     toast.success("Signed out");
