@@ -23,67 +23,58 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRole = async (userId: string) => {
+  const fetchRole = async (userId: string): Promise<AppRole | null> => {
     const { data } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userId)
       .maybeSingle();
-    setRole(data?.role ?? null);
+    const r = data?.role ?? null;
+    setRole(r);
+    return r;
   };
 
   useEffect(() => {
+    let initialLoad = true;
+
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      setSession(session);
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        const userRole = await fetchRole(session.user.id);
+        // Student session guard: if browser was closed, log them out
+        if (userRole === "student" && !sessionStorage.getItem("student_session_active")) {
+          await supabase.auth.signOut();
+          setSession(null);
+          setUser(null);
+          setRole(null);
+        } else if (userRole === "student") {
+          sessionStorage.setItem("student_session_active", "true");
+        }
+      }
+      setLoading(false);
+      initialLoad = false;
+    });
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          setTimeout(() => fetchRole(session.user.id), 0);
+          await fetchRole(session.user.id);
+          // Mark student session active on sign in
+          sessionStorage.setItem("student_session_active", "true");
         } else {
           setRole(null);
         }
-        setLoading(false);
+        if (!initialLoad) {
+          setLoading(false);
+        }
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        // Check student session guard: if no sessionStorage flag, they need to re-login
-        const isReturning = !sessionStorage.getItem("student_session_active");
-        fetchRole(session.user.id).then(() => {
-          // We'll handle the logout in a separate effect after role is loaded
-        });
-        if (isReturning) {
-          // Mark that we need to check if student should be logged out
-          sessionStorage.setItem("_check_student_session", "true");
-        }
-      }
-      setLoading(false);
-    });
-
     return () => subscription.unsubscribe();
   }, []);
-
-  // Student session guard: log out students who closed their browser
-  useEffect(() => {
-    if (loading || !user || !role) return;
-    const needsCheck = sessionStorage.getItem("_check_student_session");
-    if (needsCheck && role === "student") {
-      sessionStorage.removeItem("_check_student_session");
-      // Student is returning after closing browser - sign them out
-      supabase.auth.signOut();
-      return;
-    }
-    if (needsCheck) {
-      sessionStorage.removeItem("_check_student_session");
-    }
-    // Mark session as active for students
-    if (role === "student") {
-      sessionStorage.setItem("student_session_active", "true");
-    }
-  }, [loading, user, role]);
 
   const signUp = async (email: string, password: string, name: string) => {
     const { error } = await supabase.auth.signUp({
