@@ -62,6 +62,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (event === "PASSWORD_RECOVERY") {
           return;
         }
+
+        // Set loading true while we process the auth change
+        if (session?.user) {
+          setLoading(true);
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -71,9 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           setRole(null);
         }
-        if (!initialLoad) {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     );
 
