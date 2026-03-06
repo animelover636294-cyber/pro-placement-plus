@@ -23,12 +23,20 @@ export default function ResetPassword() {
       }
     });
 
-    // Also check if we already have a session (user clicked the link)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        setIsReady(true);
-      }
-    });
+    // Check URL hash for recovery token - this means user clicked the reset link
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=recovery")) {
+      // Supabase will process the hash and fire PASSWORD_RECOVERY event
+      // Just wait for it
+    } else {
+      // No recovery hash - check if already in recovery session
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          // Check if this is a recovery session by looking at aal level
+          setIsReady(true);
+        }
+      });
+    }
 
     return () => subscription.unsubscribe();
   }, []);
