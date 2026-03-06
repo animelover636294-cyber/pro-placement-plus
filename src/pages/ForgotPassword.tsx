@@ -24,43 +24,16 @@ export default function ForgotPassword() {
     e.preventDefault();
     setIsLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-reset-code", {
-        body: { email },
+      // Use Supabase's built-in password reset which sends a recovery link
+      const siteUrl = window.location.origin;
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${siteUrl}/reset-password`,
       });
       if (error) throw error;
-      toast.success("Verification code sent to your email!");
-      setStep("code");
+      toast.success("Password reset link sent to your email!");
+      toast.info("Check your inbox and click the link to reset your password.");
     } catch (err: any) {
-      toast.error(err.message || "Failed to send code");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleVerifyAndReset = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords don't match");
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-    setIsLoading(true);
-    try {
-      const { data, error } = await supabase.functions.invoke("verify-reset-code", {
-        body: { email, code, newPassword },
-      });
-      if (error) throw error;
-      if (data?.error) {
-        toast.error(data.error);
-        return;
-      }
-      toast.success("Password reset successfully! You can now sign in.");
-      navigate("/login");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to reset password");
+      toast.error(err.message || "Failed to send reset email");
     } finally {
       setIsLoading(false);
     }
@@ -75,106 +48,33 @@ export default function ForgotPassword() {
           </Link>
           <CardTitle className="text-2xl">Reset password</CardTitle>
           <CardDescription>
-            {step === "email" && "Enter your email to receive a verification code"}
-            {step === "code" && `We sent a 6-digit code to ${email}`}
-            {step === "password" && "Enter your new password"}
+            Enter your email and we'll send you a link to reset your password
           </CardDescription>
         </CardHeader>
-
-        {step === "email" && (
-          <form onSubmit={handleSendCode}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@college.edu"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-9"
-                    required
-                  />
-                </div>
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Sending…" : "Send verification code"}
-              </Button>
-            </CardFooter>
-          </form>
-        )}
-
-        {step === "code" && (
-          <form onSubmit={(e) => { e.preventDefault(); setStep("password"); }}>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col items-center space-y-4">
-                <ShieldCheck className="h-12 w-12 text-primary" />
-                <Label>Enter verification code</Label>
-                <InputOTP maxLength={6} value={code} onChange={setCode}>
-                  <InputOTPGroup>
-                    <InputOTPSlot index={0} />
-                    <InputOTPSlot index={1} />
-                    <InputOTPSlot index={2} />
-                    <InputOTPSlot index={3} />
-                    <InputOTPSlot index={4} />
-                    <InputOTPSlot index={5} />
-                  </InputOTPGroup>
-                </InputOTP>
-              </div>
-            </CardContent>
-            <CardFooter className="flex-col gap-2">
-              <Button type="submit" className="w-full" disabled={code.length !== 6}>
-                Verify code
-              </Button>
-              <Button type="button" variant="ghost" size="sm" onClick={() => setStep("email")}>
-                Didn't receive it? Resend
-              </Button>
-            </CardFooter>
-          </form>
-        )}
-
-        {step === "password" && (
-          <form onSubmit={handleVerifyAndReset}>
-            <CardContent className="space-y-4">
-              <div className="flex flex-col items-center mb-2">
-                <KeyRound className="h-12 w-12 text-primary" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New password</Label>
+        <form onSubmit={handleSendCode}>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
-                  id="new-password"
-                  type="password"
-                  placeholder="At least 6 characters"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="you@college.edu"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="pl-9"
                   required
-                  minLength={6}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm password</Label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  placeholder="Repeat your password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  minLength={6}
-                />
-              </div>
-            </CardContent>
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Resetting…" : "Reset password"}
-              </Button>
-            </CardFooter>
-          </form>
-        )}
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Sending…" : "Send reset link"}
+            </Button>
+          </CardFooter>
+        </form>
       </Card>
     </div>
   );
