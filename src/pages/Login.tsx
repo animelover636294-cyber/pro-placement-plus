@@ -42,8 +42,14 @@ export default function Login() {
       setMfaRequired(true);
       setMfaFactorId(verifiedFactors[0].id);
     } else {
+      // Fetch role to navigate to correct dashboard
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+        .maybeSingle();
       toast.success("Signed in successfully");
-      navigate("/");
+      navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
     }
   };
 
@@ -71,7 +77,12 @@ export default function Login() {
     }
 
     toast.success("Signed in successfully");
-    navigate("/");
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
+      .maybeSingle();
+    navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
 
   if (mfaRequired) {
