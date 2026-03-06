@@ -25,9 +25,8 @@ export default function ForgotPassword() {
     setIsLoading(true);
     try {
       // Use Supabase's built-in password reset which sends a recovery link
-      const siteUrl = window.location.origin;
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${siteUrl}/reset-password`,
+        redirectTo: `https://pro-placement-plus.vercel.app/reset-password`,
       });
       if (error) throw error;
       toast.success("Password reset link sent to your email!");
