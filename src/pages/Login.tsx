@@ -22,28 +22,18 @@ export default function Login() {
   const [mfaCode, setMfaCode] = useState("");
   const [verifyingMfa, setVerifyingMfa] = useState(false);
 
-  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 15000): Promise<T> => {
-    return await Promise.race([
-      promise,
-      new Promise<T>((_, reject) => {
-        window.setTimeout(() => reject(new Error("Request timed out. Please try again.")), timeoutMs);
-      }),
-    ]);
-  };
-
   const navigateByRole = async () => {
-    const { data: userData, error: userError } = await supabase.auth.getUser();
-    if (userError || !userData.user) {
-      throw new Error("Your session was not established. Please sign in again.");
+    const { data: userData } = await supabase.auth.getUser();
+    if (!userData.user) {
+      toast.error("Session not established. Please sign in again.");
+      return;
     }
 
-    const { data: roleData, error: roleError } = await supabase
+    const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", userData.user.id)
       .maybeSingle();
-
-    if (roleError) throw roleError;
 
     navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
@@ -59,9 +49,7 @@ export default function Login() {
         return;
       }
 
-      const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
-      if (factorsError) throw factorsError;
-
+      const { data: factorsData } = await supabase.auth.mfa.listFactors();
       const verifiedFactors = factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
 
       if (verifiedFactors.length > 0) {
@@ -73,7 +61,7 @@ export default function Login() {
       toast.success("Signed in successfully");
       await navigateByRole();
     } catch (err: any) {
-      toast.error(err?.message || "Unable to sign in right now. Please try again.");
+      toast.error(err?.message || "Unable to sign in. Please try again.");
     } finally {
       setIsLoading(false);
     }
@@ -84,27 +72,27 @@ export default function Login() {
     setVerifyingMfa(true);
 
     try {
-      const challenge = await withTimeout(supabase.auth.mfa.challenge({ factorId: mfaFactorId }));
-      if (challenge.error) {
-        throw new Error(challenge.error.message);
+      const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
+      if (challengeError) {
+        toast.error(challengeError.message);
+        return;
       }
 
-      const verify = await withTimeout(
-        supabase.auth.mfa.verify({
-          factorId: mfaFactorId,
-          challengeId: challenge.data.id,
-          code: mfaCode,
-        })
-      );
+      const { error: verifyError } = await supabase.auth.mfa.verify({
+        factorId: mfaFactorId,
+        challengeId: challengeData.id,
+        code: mfaCode,
+      });
 
-      if (verify.error) {
-        throw new Error("Invalid code. Please try again.");
+      if (verifyError) {
+        toast.error("Invalid code. Please try again.");
+        return;
       }
 
       toast.success("Signed in successfully");
       await navigateByRole();
     } catch (err: any) {
-      toast.error(err?.message || "Two-factor verification failed. Please try again.");
+      toast.error(err?.message || "Verification failed. Please try again.");
     } finally {
       setVerifyingMfa(false);
     }
