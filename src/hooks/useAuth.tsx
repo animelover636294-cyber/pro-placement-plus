@@ -57,27 +57,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         // Skip processing for password recovery - let ResetPassword page handle it
         if (event === "PASSWORD_RECOVERY") {
           return;
         }
 
-        // Set loading true while we process the auth change
-        if (session?.user) {
-          setLoading(true);
-        }
-
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          await fetchRole(session.user.id);
-          // Mark student session active on sign in
-          sessionStorage.setItem("student_session_active", "true");
+          // Use setTimeout to avoid blocking supabase-js internal await on listeners
+          setTimeout(async () => {
+            setLoading(true);
+            await fetchRole(session.user.id);
+            sessionStorage.setItem("student_session_active", "true");
+            setLoading(false);
+          }, 0);
         } else {
           setRole(null);
+          setLoading(false);
         }
-        setLoading(false);
       }
     );
 
