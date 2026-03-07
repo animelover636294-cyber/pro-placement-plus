@@ -22,34 +22,60 @@ export default function Login() {
   const [mfaCode, setMfaCode] = useState("");
   const [verifyingMfa, setVerifyingMfa] = useState(false);
 
+  const withTimeout = async <T,>(promise: Promise<T>, timeoutMs = 15000): Promise<T> => {
+    return await Promise.race([
+      promise,
+      new Promise<T>((_, reject) => {
+        window.setTimeout(() => reject(new Error("Request timed out. Please try again.")), timeoutMs);
+      }),
+    ]);
+  };
+
+  const navigateByRole = async () => {
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      throw new Error("Your session was not established. Please sign in again.");
+    }
+
+    const { data: roleData, error: roleError } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userData.user.id)
+      .maybeSingle();
+
+    if (roleError) throw roleError;
+
+    navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    const { error } = await signIn(email, password);
-    setIsLoading(false);
 
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    try {
+      const { error } = await signIn(email, password);
+      if (error) {
+        toast.error(error.message);
+        return;
+      }
 
-    // Check if user has MFA enabled
-    const { data: factorsData } = await supabase.auth.mfa.listFactors();
-    const verifiedFactors = factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
+      const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+      if (factorsError) throw factorsError;
 
-    if (verifiedFactors.length > 0) {
-      // MFA is required
-      setMfaRequired(true);
-      setMfaFactorId(verifiedFactors[0].id);
-    } else {
-      // Fetch role to navigate to correct dashboard
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
-        .maybeSingle();
+      const verifiedFactors = factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
+
+      if (verifiedFactors.length > 0) {
+        setMfaRequired(true);
+        setMfaFactorId(verifiedFactors[0].id);
+        return;
+      }
+
       toast.success("Signed in successfully");
-      navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
+      await navigateByRole();
+    } catch (err: any) {
+      toast.error(err?.message || "Unable to sign in right now. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -57,32 +83,31 @@ export default function Login() {
     if (!mfaFactorId) return;
     setVerifyingMfa(true);
 
-    const challenge = await supabase.auth.mfa.challenge({ factorId: mfaFactorId });
-    if (challenge.error) {
-      toast.error(challenge.error.message);
+    try {
+      const challenge = await withTimeout(supabase.auth.mfa.challenge({ factorId: mfaFactorId }));
+      if (challenge.error) {
+        throw new Error(challenge.error.message);
+      }
+
+      const verify = await withTimeout(
+        supabase.auth.mfa.verify({
+          factorId: mfaFactorId,
+          challengeId: challenge.data.id,
+          code: mfaCode,
+        })
+      );
+
+      if (verify.error) {
+        throw new Error("Invalid code. Please try again.");
+      }
+
+      toast.success("Signed in successfully");
+      await navigateByRole();
+    } catch (err: any) {
+      toast.error(err?.message || "Two-factor verification failed. Please try again.");
+    } finally {
       setVerifyingMfa(false);
-      return;
     }
-
-    const verify = await supabase.auth.mfa.verify({
-      factorId: mfaFactorId,
-      challengeId: challenge.data.id,
-      code: mfaCode,
-    });
-
-    setVerifyingMfa(false);
-    if (verify.error) {
-      toast.error("Invalid code. Please try again.");
-      return;
-    }
-
-    toast.success("Signed in successfully");
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", (await supabase.auth.getUser()).data.user?.id ?? "")
-      .maybeSingle();
-    navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
 
   if (mfaRequired) {

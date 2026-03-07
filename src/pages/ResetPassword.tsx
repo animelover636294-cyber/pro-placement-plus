@@ -16,30 +16,56 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Listen for the PASSWORD_RECOVERY event from the hash token
+    const vercelHost = "pro-placement-plus.vercel.app";
+    const vercelResetUrl = "https://pro-placement-plus.vercel.app/reset-password";
+
+    const hasRecoveryInHash = window.location.hash.includes("type=recovery");
+    const hasRecoveryInQuery = window.location.search.includes("type=recovery");
+    const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
+
+    if (window.location.hostname !== vercelHost && (hasRecoveryInHash || hasRecoveryInQuery || tokenHash)) {
+      window.location.replace(`${vercelResetUrl}${window.location.search}${window.location.hash}`);
+      return;
+    }
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setIsReady(true);
       }
     });
 
-    // Check URL hash for recovery token - this means user clicked the reset link
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      // Supabase will process the hash and fire PASSWORD_RECOVERY event
-      // Just wait for it
-    } else {
-      // No recovery hash - check if already in recovery session
-      supabase.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-          // Check if this is a recovery session by looking at aal level
-          setIsReady(true);
+    const initializeRecovery = async () => {
+      if (tokenHash && hasRecoveryInQuery) {
+        const { error } = await supabase.auth.verifyOtp({
+          type: "recovery",
+          token_hash: tokenHash,
+        });
+
+        if (error) {
+          toast.error("This reset link is invalid or expired. Please request a new one.");
+          navigate("/forgot-password", { replace: true });
+          return;
         }
-      });
-    }
+
+        setIsReady(true);
+        return;
+      }
+
+      if (!hasRecoveryInHash) {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          setIsReady(true);
+        } else {
+          toast.error("Invalid reset link. Please request a new password reset email.");
+          navigate("/forgot-password", { replace: true });
+        }
+      }
+    };
+
+    initializeRecovery();
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [navigate]);
 
   const handleReset = async (e: React.FormEvent) => {
     e.preventDefault();
