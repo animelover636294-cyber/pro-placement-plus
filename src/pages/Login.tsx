@@ -74,10 +74,18 @@ export default function Login() {
     if (provider === "google") setIsGoogleLoading(true);
     if (provider === "apple") setIsAppleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: "https://pro-placement-plus.vercel.app/login",
+      const redirectTo = `${window.location.origin}/login`;
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo,
+          skipBrowserRedirect: true,
+        },
       });
-      if (error) toast.error(error.message || `${provider} sign-in failed`);
+      if (error) { toast.error(error.message || `${provider} sign-in failed`); return; }
+      if (data?.url) {
+        window.location.href = data.url;
+      }
     } catch (err: any) {
       toast.error(err?.message || `${provider} sign-in failed`);
     } finally {
