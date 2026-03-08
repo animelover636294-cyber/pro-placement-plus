@@ -16,17 +16,9 @@ export default function ResetPassword() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const vercelHost = "pro-placement-plus.vercel.app";
-    const vercelResetUrl = "https://pro-placement-plus.vercel.app/reset-password";
-
     const hasRecoveryInHash = window.location.hash.includes("type=recovery");
     const hasRecoveryInQuery = window.location.search.includes("type=recovery");
     const tokenHash = new URLSearchParams(window.location.search).get("token_hash");
-
-    if (window.location.hostname !== vercelHost && (hasRecoveryInHash || hasRecoveryInQuery || tokenHash)) {
-      window.location.replace(`${vercelResetUrl}${window.location.search}${window.location.hash}`);
-      return;
-    }
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
