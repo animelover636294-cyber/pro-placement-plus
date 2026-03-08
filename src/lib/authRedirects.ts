@@ -1,8 +1,6 @@
-// Compute redirect URLs dynamically at call time so they match the current domain
-export const getAuthRedirects = () => {
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://pro-placement-plus.vercel.app";
-  return {
-    signupVerify: `${origin}/login`,
-    passwordRecovery: `${origin}/reset-password`,
-  };
-};
+export const APP_WEB_URL = "https://pro-placement-plus.vercel.app";
+
+export const getAuthRedirects = () => ({
+  signupVerify: `${APP_WEB_URL}/login`,
+  passwordRecovery: `${APP_WEB_URL}/reset-password`,
+});
