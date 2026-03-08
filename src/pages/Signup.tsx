@@ -52,22 +52,20 @@ export default function Signup() {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const { signUp } = useAuth();
 
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
+    if (provider === "google") setIsGoogleLoading(true);
+    if (provider === "apple") setIsAppleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("google", { redirect_uri: window.location.origin });
-      if (error) toast.error(error.message || "Google sign-in failed");
-    } catch (err: any) { toast.error(err?.message || "Google sign-in failed"); }
-    finally { setIsGoogleLoading(false); }
-  };
-
-  const handleAppleSignIn = async () => {
-    setIsAppleLoading(true);
-    try {
-      const { error } = await lovable.auth.signInWithOAuth("apple", { redirect_uri: window.location.origin });
-      if (error) toast.error(error.message || "Apple sign-in failed");
-    } catch (err: any) { toast.error(err?.message || "Apple sign-in failed"); }
-    finally { setIsAppleLoading(false); }
+      const { error } = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: window.location.origin,
+      });
+      if (error) toast.error(error.message || `${provider} sign-in failed`);
+    } catch (err: any) {
+      toast.error(err?.message || `${provider} sign-in failed`);
+    } finally {
+      if (provider === "google") setIsGoogleLoading(false);
+      if (provider === "apple") setIsAppleLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -103,7 +101,7 @@ export default function Signup() {
                 type="button"
                 variant="outline"
                 className="w-full h-12 border-white/[0.1] bg-white/[0.04] text-white font-medium hover:bg-white/[0.08] transition-all gap-3"
-                onClick={handleGoogleSignIn}
+                onClick={() => handleOAuthSignIn("google")}
                 disabled={isGoogleLoading}
               >
                 {isGoogleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}
@@ -115,7 +113,7 @@ export default function Signup() {
                 type="button"
                 variant="outline"
                 className="w-full h-12 border-white/[0.1] bg-white/[0.04] text-white font-medium hover:bg-white/[0.08] transition-all gap-3"
-                onClick={handleAppleSignIn}
+                onClick={() => handleOAuthSignIn("apple")}
                 disabled={isAppleLoading}
               >
                 {isAppleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <AppleIcon />}
