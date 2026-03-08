@@ -99,8 +99,13 @@ export default function Login() {
         }
 
         const oauthUrl = new URL(data.url);
-        const allowedHosts = provider === "google" ? ["accounts.google.com"] : ["appleid.apple.com"];
-        if (!allowedHosts.includes(oauthUrl.hostname)) {
+        const isTrustedHost =
+          oauthUrl.protocol === "https:" &&
+          (oauthUrl.hostname === "accounts.google.com" ||
+            oauthUrl.hostname === "appleid.apple.com" ||
+            oauthUrl.hostname.endsWith(".supabase.co"));
+
+        if (!isTrustedHost) {
           toast.error("Invalid OAuth redirect URL.");
           return;
         }
