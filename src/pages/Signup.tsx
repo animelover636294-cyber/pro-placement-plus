@@ -113,7 +113,7 @@ export default function Signup() {
                 type="button"
                 variant="outline"
                 className="w-full h-12 border-white/[0.1] bg-white/[0.04] text-white font-medium hover:bg-white/[0.08] transition-all gap-3"
-                onClick={handleAppleSignIn}
+                onClick={() => handleOAuthSignIn("apple")}
                 disabled={isAppleLoading}
               >
                 {isAppleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <AppleIcon />}
