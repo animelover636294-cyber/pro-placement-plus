@@ -63,14 +63,22 @@ export default function Login() {
       const { error } = await lovable.auth.signInWithOAuth("google", {
         redirect_uri: window.location.origin,
       });
-      if (error) {
-        toast.error(error.message || "Google sign-in failed");
-      }
+      if (error) toast.error(error.message || "Google sign-in failed");
     } catch (err: any) {
       toast.error(err?.message || "Google sign-in failed");
-    } finally {
-      setIsGoogleLoading(false);
-    }
+    } finally { setIsGoogleLoading(false); }
+  };
+
+  const handleAppleSignIn = async () => {
+    setIsAppleLoading(true);
+    try {
+      const { error } = await lovable.auth.signInWithOAuth("apple", {
+        redirect_uri: window.location.origin,
+      });
+      if (error) toast.error(error.message || "Apple sign-in failed");
+    } catch (err: any) {
+      toast.error(err?.message || "Apple sign-in failed");
+    } finally { setIsAppleLoading(false); }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
