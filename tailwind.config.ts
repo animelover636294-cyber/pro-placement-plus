@@ -15,6 +15,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ["'Plus Jakarta Sans'", "system-ui", "-apple-system", "sans-serif"],
+        display: ["'Space Grotesk'", "'Plus Jakarta Sans'", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -70,6 +71,7 @@ export default {
         },
       },
       borderRadius: {
+        "2xl": "calc(var(--radius) + 8px)",
         xl: "calc(var(--radius) + 4px)",
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",

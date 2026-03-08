@@ -9,39 +9,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarProvider,
-  SidebarTrigger,
+  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
+  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider, SidebarTrigger,
 } from "@/components/ui/sidebar";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  LayoutDashboard,
-  Building2,
-  FileText,
-  Users,
-  BarChart3,
-  ClipboardList,
-  GraduationCap,
-  CalendarDays,
-  Trophy,
-  UserCircle,
-  LogOut,
-  Menu,
-  Shield,
+  LayoutDashboard, Building2, FileText, Users, BarChart3, ClipboardList,
+  GraduationCap, CalendarDays, Trophy, UserCircle, LogOut, Menu, Shield,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
@@ -68,21 +44,20 @@ const studentLinks = [
 
 function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const links = isAdmin ? adminLinks : studentLinks;
-
   return (
-    <Sidebar className="border-r border-sidebar-border glass-strong">
+    <Sidebar className="border-r border-white/5 bg-dark-surface">
       <SidebarContent>
         <div className="flex items-center gap-3 px-5 py-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg shadow-lg shadow-primary/25">
-            <GraduationCap className="h-4 w-4 text-primary-foreground" />
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-3d-primary">
+            <GraduationCap className="h-4 w-4 text-white" />
           </div>
-          <span className="text-lg font-bold tracking-tight text-sidebar-foreground">SmartPlace</span>
+          <span className="font-display text-lg font-bold tracking-tight text-white">SmartPlace</span>
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <SidebarGroupLabel className="px-5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/30">
             {isAdmin ? "Admin" : "Student"}
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-2">
+          <SidebarGroupContent className="px-3 mt-2">
             <SidebarMenu>
               {links.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -90,8 +65,8 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin" || item.url === "/dashboard"}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/40 transition-all duration-200 hover:bg-white/5 hover:text-white"
+                      activeClassName="bg-gradient-primary text-white shadow-3d-primary font-semibold"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -132,58 +107,38 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    const shouldForceReset = new URLSearchParams(location.search).get("force_password_reset") === "1";
-    if (shouldForceReset) setForceResetOpen(true);
+    if (new URLSearchParams(location.search).get("force_password_reset") === "1") setForceResetOpen(true);
   }, [location.search]);
 
-  const handleSignOut = async () => {
-    await signOut();
-    toast.success("Signed out");
-  };
+  const handleSignOut = async () => { await signOut(); toast.success("Signed out"); };
 
   const handlePasswordUpdate = async () => {
     if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
     if (newPassword !== confirmPassword) { toast.error("Passwords don't match"); return; }
-
     setIsUpdatingPassword(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setIsUpdatingPassword(false);
-
     if (error) { toast.error(error.message); return; }
-
     const params = new URLSearchParams(location.search);
     params.delete("force_password_reset");
-
     toast.success("Password updated successfully");
     setForceResetOpen(false);
-    setNewPassword("");
-    setConfirmPassword("");
-
-    navigate(
-      { pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : "" },
-      { replace: true }
-    );
+    setNewPassword(""); setConfirmPassword("");
+    navigate({ pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : "" }, { replace: true });
   };
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full">
+      <div className="flex min-h-screen w-full bg-dark-surface">
         <AppSidebar isAdmin={isAdmin} />
         <div className="flex flex-1 flex-col">
-          <header className="glass-strong flex h-16 items-center justify-between border-b border-border/50 px-6">
-            <SidebarTrigger>
-              <Menu className="h-5 w-5" />
-            </SidebarTrigger>
+          <header className="flex h-16 items-center justify-between border-b border-white/5 bg-dark-elevated px-6">
+            <SidebarTrigger><Menu className="h-5 w-5 text-white/50" /></SidebarTrigger>
             <div className="flex items-center gap-4">
-              <span className="hidden text-sm font-medium text-muted-foreground sm:block">{user?.email}</span>
+              <span className="hidden text-sm font-medium text-white/40 sm:block">{user?.email}</span>
               <NotificationCenter />
               <ThemeToggle />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground hover:text-foreground"
-                onClick={handleSignOut}
-              >
+              <Button variant="ghost" size="sm" className="text-white/40 hover:text-white hover:bg-white/5" onClick={handleSignOut}>
                 <LogOut className="mr-1.5 h-4 w-4" /> Sign out
               </Button>
             </div>
@@ -194,28 +149,29 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
       <Dialog open={forceResetOpen} onOpenChange={(open) => open && setForceResetOpen(true)}>
         <DialogContent
-          className="glass-strong rounded-2xl sm:max-w-md"
-          onEscapeKeyDown={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
+          className="rounded-2xl border border-white/5 bg-dark-elevated shadow-3d sm:max-w-md"
+          onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle className="text-xl font-bold">Set your new password</DialogTitle>
-            <DialogDescription>
-              For security, you must set a new password before continuing.
-            </DialogDescription>
+            <DialogTitle className="font-display text-xl font-bold text-white">Set your new password</DialogTitle>
+            <DialogDescription className="text-white/50">For security, you must set a new password before continuing.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="recovery-new-password">New password</Label>
-              <Input id="recovery-new-password" type="password" placeholder="At least 6 characters" className="glass" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required />
+              <Label htmlFor="recovery-new-password" className="text-white/70">New password</Label>
+              <Input id="recovery-new-password" type="password" placeholder="At least 6 characters"
+                className="border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-primary"
+                value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="recovery-confirm-password">Confirm password</Label>
-              <Input id="recovery-confirm-password" type="password" placeholder="Repeat your password" className="glass" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
+              <Label htmlFor="recovery-confirm-password" className="text-white/70">Confirm password</Label>
+              <Input id="recovery-confirm-password" type="password" placeholder="Repeat your password"
+                className="border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-primary"
+                value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
             </div>
           </div>
           <DialogFooter>
-            <Button className="w-full gradient-bg border-0 font-semibold shadow-lg shadow-primary/25" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
+            <Button className="w-full bg-gradient-primary border-0 font-bold shadow-3d-primary" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
               {isUpdatingPassword ? "Updating…" : "Update password"}
             </Button>
           </DialogFooter>
