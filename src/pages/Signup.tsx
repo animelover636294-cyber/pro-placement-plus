@@ -69,6 +69,13 @@ export default function Signup() {
     }
   };
 
+
+  useEffect(() => {
+    if (!loading && user && role) {
+      navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [loading, user, role, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) { toast.error("Password must be at least 6 characters"); return; }

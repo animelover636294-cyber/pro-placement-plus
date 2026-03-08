@@ -65,7 +65,13 @@ export default function Login() {
     navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
 
-  const handleOAuthSignIn = async (provider: "google" | "apple") => {
+
+  useEffect(() => {
+    if (!loading && user && role) {
+      navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [loading, user, role, navigate]);
+
     if (provider === "google") setIsGoogleLoading(true);
     if (provider === "apple") setIsAppleLoading(true);
     try {
