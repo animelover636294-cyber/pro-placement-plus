@@ -70,17 +70,19 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const links = isAdmin ? adminLinks : studentLinks;
 
   return (
-    <Sidebar className="border-r border-sidebar-border">
+    <Sidebar className="border-r border-sidebar-border glass-strong">
       <SidebarContent>
-        <div className="flex items-center gap-2 px-4 py-5">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <GraduationCap className="h-4 w-4" />
+        <div className="flex items-center gap-3 px-5 py-6">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl gradient-bg shadow-lg shadow-primary/25">
+            <GraduationCap className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="text-lg font-semibold text-sidebar-foreground">SmartPlace</span>
+          <span className="text-lg font-bold tracking-tight text-sidebar-foreground">SmartPlace</span>
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel>{isAdmin ? "Admin" : "Student"}</SidebarGroupLabel>
-          <SidebarGroupContent>
+          <SidebarGroupLabel className="px-5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            {isAdmin ? "Admin" : "Student"}
+          </SidebarGroupLabel>
+          <SidebarGroupContent className="px-2">
             <SidebarMenu>
               {links.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -88,10 +90,10 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin" || item.url === "/dashboard"}
-                      className="hover:bg-sidebar-accent"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-foreground/70 transition-all duration-200 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                      activeClassName="bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                     >
-                      <item.icon className="mr-2 h-4 w-4" />
+                      <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -116,10 +118,8 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
-  // Admin session timeout
   useAdminSessionTimeout();
 
-  // Admin resume route after re-login (run only once on mount)
   useEffect(() => {
     if (isAdmin) {
       const resumeRoute = getAdminResumeRoute();
@@ -133,9 +133,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const shouldForceReset = new URLSearchParams(location.search).get("force_password_reset") === "1";
-    if (shouldForceReset) {
-      setForceResetOpen(true);
-    }
+    if (shouldForceReset) setForceResetOpen(true);
   }, [location.search]);
 
   const handleSignOut = async () => {
@@ -144,24 +142,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   const handlePasswordUpdate = async () => {
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      toast.error("Passwords don't match");
-      return;
-    }
+    if (newPassword.length < 6) { toast.error("Password must be at least 6 characters"); return; }
+    if (newPassword !== confirmPassword) { toast.error("Passwords don't match"); return; }
 
     setIsUpdatingPassword(true);
     const { error } = await supabase.auth.updateUser({ password: newPassword });
     setIsUpdatingPassword(false);
 
-    if (error) {
-      toast.error(error.message);
-      return;
-    }
+    if (error) { toast.error(error.message); return; }
 
     const params = new URLSearchParams(location.search);
     params.delete("force_password_reset");
@@ -172,10 +160,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     setConfirmPassword("");
 
     navigate(
-      {
-        pathname: location.pathname,
-        search: params.toString() ? `?${params.toString()}` : "",
-      },
+      { pathname: location.pathname, search: params.toString() ? `?${params.toString()}` : "" },
       { replace: true }
     );
   };
@@ -185,16 +170,21 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
       <div className="flex min-h-screen w-full">
         <AppSidebar isAdmin={isAdmin} />
         <div className="flex flex-1 flex-col">
-          <header className="flex h-14 items-center justify-between border-b px-4">
+          <header className="glass-strong flex h-16 items-center justify-between border-b border-border/50 px-6">
             <SidebarTrigger>
               <Menu className="h-5 w-5" />
             </SidebarTrigger>
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-muted-foreground">{user?.email}</span>
+            <div className="flex items-center gap-4">
+              <span className="hidden text-sm font-medium text-muted-foreground sm:block">{user?.email}</span>
               <NotificationCenter />
               <ThemeToggle />
-              <Button variant="ghost" size="sm" onClick={handleSignOut}>
-                <LogOut className="mr-1 h-4 w-4" /> Sign out
+              <Button
+                variant="ghost"
+                size="sm"
+                className="text-muted-foreground hover:text-foreground"
+                onClick={handleSignOut}
+              >
+                <LogOut className="mr-1.5 h-4 w-4" /> Sign out
               </Button>
             </div>
           </header>
@@ -204,47 +194,28 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
       <Dialog open={forceResetOpen} onOpenChange={(open) => open && setForceResetOpen(true)}>
         <DialogContent
-          className="sm:max-w-md"
-          onEscapeKeyDown={(event) => event.preventDefault()}
-          onInteractOutside={(event) => event.preventDefault()}
+          className="glass-strong rounded-2xl sm:max-w-md"
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
-            <DialogTitle>Set your new password</DialogTitle>
+            <DialogTitle className="text-xl font-bold">Set your new password</DialogTitle>
             <DialogDescription>
               For security, you must set a new password before continuing.
             </DialogDescription>
           </DialogHeader>
-
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="recovery-new-password">New password</Label>
-              <Input
-                id="recovery-new-password"
-                type="password"
-                placeholder="At least 6 characters"
-                value={newPassword}
-                onChange={(event) => setNewPassword(event.target.value)}
-                minLength={6}
-                required
-              />
+              <Input id="recovery-new-password" type="password" placeholder="At least 6 characters" className="glass" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required />
             </div>
-
             <div className="space-y-2">
               <Label htmlFor="recovery-confirm-password">Confirm password</Label>
-              <Input
-                id="recovery-confirm-password"
-                type="password"
-                placeholder="Repeat your password"
-                value={confirmPassword}
-                onChange={(event) => setConfirmPassword(event.target.value)}
-                minLength={6}
-                required
-              />
+              <Input id="recovery-confirm-password" type="password" placeholder="Repeat your password" className="glass" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
             </div>
           </div>
-
           <DialogFooter>
-            <Button className="w-full" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
+            <Button className="w-full gradient-bg border-0 font-semibold shadow-lg shadow-primary/25" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
               {isUpdatingPassword ? "Updating…" : "Update password"}
             </Button>
           </DialogFooter>
