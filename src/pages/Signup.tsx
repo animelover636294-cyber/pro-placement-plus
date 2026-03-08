@@ -52,38 +52,14 @@ export default function Signup() {
   const [isAppleLoading, setIsAppleLoading] = useState(false);
   const { signUp } = useAuth();
 
-  function isInIframe(): boolean {
-    try { return window.self !== window.top; } catch { return true; }
-  }
-
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     if (provider === "google") setIsGoogleLoading(true);
     if (provider === "apple") setIsAppleLoading(true);
     try {
-      const { data, error } = await lovable.auth.signInWithOAuth(provider, {
+      const { error } = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
-        options: { skipBrowserRedirect: true },
       });
-      if (error) throw error;
-      if (data?.url) {
-        if (isInIframe()) {
-          const popup = window.open(data.url, "oauth", "width=500,height=600");
-          if (!popup) {
-            toast.error("Please allow popups for this site to sign in.");
-          } else {
-            const messageHandler = (event: MessageEvent) => {
-              if (event.origin === window.location.origin && event.data?.type === "oauth-complete") {
-                popup?.close();
-                window.removeEventListener("message", messageHandler);
-                window.location.reload();
-              }
-            };
-            window.addEventListener("message", messageHandler);
-          }
-        } else {
-          window.location.href = data.url;
-        }
-      }
+      if (error) toast.error(error.message || `${provider} sign-in failed`);
     } catch (err: any) {
       toast.error(err?.message || `${provider} sign-in failed`);
     } finally {
