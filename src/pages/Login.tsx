@@ -50,7 +50,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, role, loading } = useAuth();
   const navigate = useNavigate();
 
   const [mfaRequired, setMfaRequired] = useState(false);
