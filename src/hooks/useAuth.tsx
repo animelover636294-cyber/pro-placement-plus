@@ -90,7 +90,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { name },
-        emailRedirectTo: "https://pro-placement-plus.vercel.app/login",
+        emailRedirectTo: AUTH_REDIRECTS.signupVerify,
       },
     });
     return { error: error as Error | null };
