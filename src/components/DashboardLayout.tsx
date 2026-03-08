@@ -1,10 +1,13 @@
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
 import { useAdminSessionTimeout, getAdminResumeRoute, clearAdminResumeRoute } from "@/hooks/useSessionTimeout";
 import { NavLink } from "@/components/NavLink";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Sidebar,
   SidebarContent,
@@ -16,8 +19,15 @@ import {
   SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   LayoutDashboard,
   Building2,
@@ -99,6 +109,12 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   const { role, signOut, user } = useAuth();
   const isAdmin = role === "admin";
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [forceResetOpen, setForceResetOpen] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   // Admin session timeout
   useAdminSessionTimeout();
@@ -114,9 +130,54 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const shouldForceReset = new URLSearchParams(location.search).get("force_password_reset") === "1";
+    if (shouldForceReset) {
+      setForceResetOpen(true);
+    }
+  }, [location.search]);
+
   const handleSignOut = async () => {
     await signOut();
     toast.success("Signed out");
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    const { error } = await supabase.auth.updateUser({ password: newPassword });
+    setIsUpdatingPassword(false);
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+
+    const params = new URLSearchParams(location.search);
+    params.delete("force_password_reset");
+
+    toast.success("Password updated successfully");
+    setForceResetOpen(false);
+    setNewPassword("");
+    setConfirmPassword("");
+
+    navigate(
+      {
+        pathname: location.pathname,
+        search: params.toString() ? `?${params.toString()}` : "",
+      },
+      { replace: true }
+    );
   };
 
   return (
@@ -140,6 +201,55 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
           <main className="flex-1 overflow-auto p-6">{children}</main>
         </div>
       </div>
+
+      <Dialog open={forceResetOpen} onOpenChange={(open) => open && setForceResetOpen(true)}>
+        <DialogContent
+          className="sm:max-w-md"
+          onEscapeKeyDown={(event) => event.preventDefault()}
+          onInteractOutside={(event) => event.preventDefault()}
+        >
+          <DialogHeader>
+            <DialogTitle>Set your new password</DialogTitle>
+            <DialogDescription>
+              For security, you must set a new password before continuing.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="recovery-new-password">New password</Label>
+              <Input
+                id="recovery-new-password"
+                type="password"
+                placeholder="At least 6 characters"
+                value={newPassword}
+                onChange={(event) => setNewPassword(event.target.value)}
+                minLength={6}
+                required
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="recovery-confirm-password">Confirm password</Label>
+              <Input
+                id="recovery-confirm-password"
+                type="password"
+                placeholder="Repeat your password"
+                value={confirmPassword}
+                onChange={(event) => setConfirmPassword(event.target.value)}
+                minLength={6}
+                required
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button className="w-full" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
+              {isUpdatingPassword ? "Updating…" : "Update password"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </SidebarProvider>
   );
 }
