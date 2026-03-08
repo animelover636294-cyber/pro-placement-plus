@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -50,7 +50,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, user, role, loading } = useAuth();
   const navigate = useNavigate();
 
   const [mfaRequired, setMfaRequired] = useState(false);
@@ -64,6 +64,12 @@ export default function Login() {
     const { data: roleData } = await supabase.from("user_roles").select("role").eq("user_id", userData.user.id).maybeSingle();
     navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
+
+  useEffect(() => {
+    if (!loading && user && role) {
+      navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [loading, user, role, navigate]);
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     if (provider === "google") setIsGoogleLoading(true);

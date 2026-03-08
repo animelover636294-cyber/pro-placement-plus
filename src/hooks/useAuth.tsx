@@ -49,9 +49,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           new URLSearchParams(window.location.search).get("type") === "recovery" ||
           Boolean(new URLSearchParams(window.location.search).get("token_hash"));
 
-        // Student session guard: if browser was closed, log them out
-        // Skip this during password recovery so users can complete reset flow.
-        if (userRole === "student" && !isRecoveryFlow && !sessionStorage.getItem("student_session_active")) {
+        const isEmailProvider = (session.user.app_metadata?.provider ?? "email") === "email";
+
+        // Student session guard: if browser was closed, log out only email/password sessions.
+        // OAuth flows may start in a fresh tab/window and should not be force-signed-out.
+        if (userRole === "student" && isEmailProvider && !isRecoveryFlow && !sessionStorage.getItem("student_session_active")) {
           await supabase.auth.signOut();
           setSession(null);
           setUser(null);

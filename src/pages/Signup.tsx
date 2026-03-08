@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,8 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [isAppleLoading, setIsAppleLoading] = useState(false);
-  const { signUp } = useAuth();
+  const { signUp, user, role, loading } = useAuth();
+  const navigate = useNavigate();
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     if (provider === "google") setIsGoogleLoading(true);
@@ -67,6 +68,13 @@ export default function Signup() {
       if (provider === "apple") setIsAppleLoading(false);
     }
   };
+
+
+  useEffect(() => {
+    if (!loading && user && role) {
+      navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    }
+  }, [loading, user, role, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
