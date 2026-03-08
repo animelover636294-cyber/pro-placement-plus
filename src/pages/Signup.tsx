@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable/index";
 import { Button } from "@/components/ui/button";
@@ -58,28 +57,10 @@ export default function Signup() {
     if (provider === "google") setIsGoogleLoading(true);
     if (provider === "apple") setIsAppleLoading(true);
     try {
-      const isCustomDomain =
-        !window.location.hostname.includes("lovable.app") &&
-        !window.location.hostname.includes("lovableproject.com");
-
-      if (isCustomDomain) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: "https://pro-placement-plus.vercel.app/dashboard",
-            skipBrowserRedirect: true,
-          },
-        });
-        if (error) { toast.error(error.message || `${provider} sign-in failed`); return; }
-        if (data?.url) {
-          window.location.href = data.url;
-        }
-      } else {
-        const { error } = await lovable.auth.signInWithOAuth(provider, {
-          redirect_uri: window.location.origin,
-        });
-        if (error) toast.error(error.message || `${provider} sign-in failed`);
-      }
+      const { error } = await lovable.auth.signInWithOAuth(provider, {
+        redirect_uri: "https://pro-placement-plus.vercel.app",
+      });
+      if (error) toast.error(error.message || `${provider} sign-in failed`);
     } catch (err: any) {
       toast.error(err?.message || `${provider} sign-in failed`);
     } finally {
