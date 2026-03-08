@@ -24,7 +24,7 @@ function GoogleIcon() {
 
 function AppleIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-white" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5 fill-foreground" aria-hidden="true">
       <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
     </svg>
   );
@@ -34,10 +34,10 @@ function Divider() {
   return (
     <div className="relative my-6">
       <div className="absolute inset-0 flex items-center">
-        <div className="w-full border-t border-white/[0.08]" />
+        <div className="w-full border-t border-border" />
       </div>
       <div className="relative flex justify-center text-xs">
-        <span className="bg-transparent px-3 text-white/25 uppercase tracking-wider">or continue with email</span>
+        <span className="bg-transparent px-3 text-muted-foreground uppercase tracking-wider">or continue with email</span>
       </div>
     </div>
   );
@@ -77,15 +77,10 @@ export default function Login() {
       const redirectTo = `${window.location.origin}/login`;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: {
-          redirectTo,
-          skipBrowserRedirect: true,
-        },
+        options: { redirectTo, skipBrowserRedirect: true },
       });
       if (error) { toast.error(error.message || `${provider} sign-in failed`); return; }
-      if (data?.url) {
-        window.location.href = data.url;
-      }
+      if (data?.url) { window.location.href = data.url; }
     } catch (err: any) {
       toast.error(err?.message || `${provider} sign-in failed`);
     } finally {
@@ -129,33 +124,33 @@ export default function Login() {
       <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
         <AnimatedBackground />
         <div className="relative z-10 w-full max-w-md">
-          <GlassCard glowColor="hsl(260 70% 55% / 0.2)">
+          <GlassCard>
             <div className="text-center">
               <motion.div
-                className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.1] border border-white/[0.12]"
+                className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary border border-border"
                 animate={{ rotateY: [0, 10, -10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
               >
-                <Shield className="h-8 w-8 text-white" />
+                <Shield className="h-8 w-8 text-foreground" />
               </motion.div>
-              <h2 className="font-display text-2xl font-bold text-white">Two-Factor Auth</h2>
-              <p className="mt-2 text-sm text-white/50">Enter the 6-digit code from your authenticator</p>
+              <h2 className="font-display text-2xl font-bold text-foreground">Two-Factor Auth</h2>
+              <p className="mt-2 text-sm text-muted-foreground">Enter the 6-digit code from your authenticator</p>
             </div>
             <div className="mt-6 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="mfa-code" className="text-white/60 text-xs uppercase tracking-wider">Authentication Code</Label>
+                <Label htmlFor="mfa-code" className="text-muted-foreground text-xs uppercase tracking-wider">Authentication Code</Label>
                 <Input id="mfa-code" type="text" inputMode="numeric" placeholder="000000"
-                  className="h-14 border-white/[0.08] bg-white/[0.04] text-center font-mono text-2xl tracking-[0.5em] text-white placeholder:text-white/15 focus:border-white/20 focus:ring-white/10 backdrop-blur-sm"
+                  className="h-14 text-center font-mono text-2xl tracking-[0.5em]"
                   value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} maxLength={6} autoFocus
                   onKeyDown={(e) => { if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(); }}
                 />
               </div>
               <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-                <Button onClick={handleMfaVerify} className="w-full h-12 bg-white text-black border-0 font-bold shadow-lg hover:bg-white/90 transition-all" disabled={mfaCode.length !== 6 || verifyingMfa}>
+                <Button onClick={handleMfaVerify} className="w-full h-12 font-bold" disabled={mfaCode.length !== 6 || verifyingMfa}>
                   {verifyingMfa ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying…</> : "Verify & Sign In"}
                 </Button>
               </motion.div>
-              <Button variant="ghost" className="w-full text-white/30 hover:text-white/60" onClick={() => { setMfaRequired(false); setMfaCode(""); supabase.auth.signOut(); }}>
+              <Button variant="ghost" className="w-full text-muted-foreground" onClick={() => { setMfaRequired(false); setMfaCode(""); supabase.auth.signOut(); }}>
                 Back to Login
               </Button>
             </div>
@@ -169,41 +164,31 @@ export default function Login() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
       <AnimatedBackground />
       <div className="relative z-10 w-full max-w-md">
-        <GlassCard glowColor="hsl(220 80% 50% / 0.1)">
+        <GlassCard>
           <div className="text-center">
             <motion.div
-              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/[0.1] border border-white/[0.12]"
+              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary border border-border"
               whileHover={{ rotateY: 20, rotateX: -10, scale: 1.1 }}
               transition={{ type: "spring", stiffness: 300, damping: 20 }}
             >
-              <GraduationCap className="h-8 w-8 text-white" />
+              <GraduationCap className="h-8 w-8 text-foreground" />
             </motion.div>
-            <h2 className="font-display text-2xl font-bold text-white">Welcome back</h2>
-            <p className="mt-2 text-sm text-white/40">Sign in to your placement platform</p>
+            <h2 className="font-display text-2xl font-bold text-foreground">Welcome back</h2>
+            <p className="mt-2 text-sm text-muted-foreground">Sign in to your placement platform</p>
           </div>
 
           {/* OAuth Sign In */}
           <div className="mt-6 space-y-3">
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12 border-white/[0.1] bg-white/[0.04] text-white font-medium hover:bg-white/[0.08] transition-all gap-3"
-                onClick={() => handleOAuthSignIn("google")}
-                disabled={isGoogleLoading}
-              >
+              <Button type="button" variant="outline" className="w-full h-12 font-medium gap-3"
+                onClick={() => handleOAuthSignIn("google")} disabled={isGoogleLoading}>
                 {isGoogleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}
                 Continue with Google
               </Button>
             </motion.div>
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full h-12 border-white/[0.1] bg-white/[0.04] text-white font-medium hover:bg-white/[0.08] transition-all gap-3"
-                onClick={() => handleOAuthSignIn("apple")}
-                disabled={isAppleLoading}
-              >
+              <Button type="button" variant="outline" className="w-full h-12 font-medium gap-3"
+                onClick={() => handleOAuthSignIn("apple")} disabled={isAppleLoading}>
                 {isAppleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <AppleIcon />}
                 Continue with Apple
               </Button>
@@ -214,28 +199,26 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-white/60 text-xs uppercase tracking-wider">Email</Label>
-              <Input id="email" type="email" placeholder="you@college.edu"
-                className="h-12 border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/20 focus:border-white/20 focus:ring-white/10 backdrop-blur-sm"
+              <Label htmlFor="email" className="text-muted-foreground text-xs uppercase tracking-wider">Email</Label>
+              <Input id="email" type="email" placeholder="you@college.edu" className="h-12"
                 value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label htmlFor="password" className="text-white/60 text-xs uppercase tracking-wider">Password</Label>
-                <Link to="/forgot-password" className="text-xs font-medium text-white/40 hover:text-white/60 transition-colors">Forgot password?</Link>
+                <Label htmlFor="password" className="text-muted-foreground text-xs uppercase tracking-wider">Password</Label>
+                <Link to="/forgot-password" className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors">Forgot password?</Link>
               </div>
-              <Input id="password" type="password"
-                className="h-12 border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/20 focus:border-white/20 focus:ring-white/10 backdrop-blur-sm"
+              <Input id="password" type="password" className="h-12"
                 value={password} onChange={(e) => setPassword(e.target.value)} required />
             </div>
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
-              <Button type="submit" className="w-full h-12 bg-white text-black border-0 font-bold shadow-lg hover:bg-white/90 transition-all" disabled={isLoading}>
+              <Button type="submit" className="w-full h-12 font-bold" disabled={isLoading}>
                 {isLoading ? "Signing in…" : "Sign in"}
               </Button>
             </motion.div>
-            <p className="text-center text-sm text-white/30">
+            <p className="text-center text-sm text-muted-foreground">
               Don't have an account?{" "}
-              <Link to="/signup" className="font-medium text-white/60 hover:text-white transition-colors">Sign up</Link>
+              <Link to="/signup" className="font-medium text-foreground hover:underline transition-colors">Sign up</Link>
             </p>
           </form>
         </GlassCard>

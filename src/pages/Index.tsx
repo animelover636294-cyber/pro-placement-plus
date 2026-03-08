@@ -21,7 +21,7 @@ export default function Index() {
   if (loading) return null;
 
   return (
-    <div className="relative min-h-screen overflow-hidden text-white">
+    <div className="relative min-h-screen overflow-hidden text-foreground">
       <AnimatedBackground />
       <div className="relative z-10">
         <LandingNav />
