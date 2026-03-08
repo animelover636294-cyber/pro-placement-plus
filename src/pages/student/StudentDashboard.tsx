@@ -41,10 +41,10 @@ export default function StudentDashboard() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+        <h1 className="font-display text-3xl font-bold tracking-tight text-foreground">
           Welcome, {profile?.name || "Student"}
         </h1>
-        <p className="text-white/40">Your placement journey at a glance</p>
+        <p className="text-muted-foreground">Your placement journey at a glance</p>
       </motion.div>
 
       {/* Profile completion — high priority */}
@@ -52,15 +52,15 @@ export default function StudentDashboard() {
         <div className="flex items-start gap-4">
           <Icon3D icon={UserCircle} color="blue" size="sm" />
           <div className="flex-1">
-            <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wider">Profile Completion</h3>
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Profile Completion</h3>
             <div className="mt-3">
-              <Progress value={completion} className="h-2.5 bg-white/[0.06]" />
+              <Progress value={completion} className="h-2.5 bg-secondary" />
             </div>
-            <p className="mt-2 text-sm text-white/40">
+            <p className="mt-2 text-sm text-muted-foreground">
               {completion}% complete — {completion < 80 ? "Complete 80% to take tests" : "You're eligible for tests!"}
             </p>
           </div>
-          <span className="font-display text-2xl font-bold text-white">{completion}%</span>
+          <span className="font-display text-2xl font-bold text-foreground">{completion}%</span>
         </div>
       </BentoCard>
 
@@ -69,8 +69,8 @@ export default function StudentDashboard() {
         <BentoCard priority="medium" delay={0.2}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Upcoming Tests</p>
-              <p className="mt-2 font-display text-4xl font-bold text-white">{upcomingTests}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Upcoming Tests</p>
+              <p className="mt-2 font-display text-4xl font-bold text-foreground">{upcomingTests}</p>
             </div>
             <Icon3D icon={CalendarDays} color="violet" size="sm" />
           </div>
@@ -79,8 +79,8 @@ export default function StudentDashboard() {
         <BentoCard priority="medium" delay={0.3}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tests Completed</p>
-              <p className="mt-2 font-display text-4xl font-bold text-white">{completedTests}</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Tests Completed</p>
+              <p className="mt-2 font-display text-4xl font-bold text-foreground">{completedTests}</p>
             </div>
             <Icon3D icon={ClipboardList} color="blue" size="sm" />
           </div>
@@ -89,8 +89,8 @@ export default function StudentDashboard() {
         <BentoCard priority={passRate > 70 ? "high" : "low"} delay={0.4}>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Pass Rate</p>
-              <p className="mt-2 font-display text-4xl font-bold text-white">{passRate}%</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pass Rate</p>
+              <p className="mt-2 font-display text-4xl font-bold text-foreground">{passRate}%</p>
             </div>
             <Icon3D icon={Trophy} color="orange" size="sm" />
           </div>
