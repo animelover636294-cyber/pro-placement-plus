@@ -69,8 +69,6 @@ export default function Signup() {
     } catch (err: any) { toast.error(err?.message || "Apple sign-in failed"); }
     finally { setIsAppleLoading(false); }
   };
-    }
-  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
