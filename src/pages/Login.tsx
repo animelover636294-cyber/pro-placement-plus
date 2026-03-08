@@ -65,10 +65,23 @@ export default function Login() {
   };
 
   useEffect(() => {
-    if (!loading && user && role) {
-      navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
+    if (!loading && user && role && !mfaRequired) {
+      // For admin accounts, always check MFA before allowing navigation
+      if (role === "admin") {
+        supabase.auth.mfa.listFactors().then(({ data: factorsData }) => {
+          const verifiedFactors = factorsData?.totp?.filter((f) => f.status === "verified") ?? [];
+          if (verifiedFactors.length > 0) {
+            setMfaRequired(true);
+            setMfaFactorId(verifiedFactors[0].id);
+          } else {
+            navigate("/admin", { replace: true });
+          }
+        });
+      } else {
+        navigate("/dashboard", { replace: true });
+      }
     }
-  }, [loading, user, role, navigate]);
+  }, [loading, user, role, navigate, mfaRequired]);
 
   const handleOAuthSignIn = async (provider: "google" | "apple") => {
     if (provider === "google") setIsGoogleLoading(true);
