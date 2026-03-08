@@ -7,18 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { GraduationCap, Shield, Loader2 } from "lucide-react";
-
-function AuthShell({ children }: { children: React.ReactNode }) {
-  return (
-    <div className="relative flex min-h-screen items-center justify-center bg-dark-surface px-4 overflow-hidden">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute -top-40 -right-40 h-[500px] w-[500px] rounded-full bg-primary/10 blur-[120px]" />
-        <div className="absolute -bottom-40 -left-40 h-[400px] w-[400px] rounded-full bg-accent/10 blur-[120px]" />
-      </div>
-      <div className="relative z-10 w-full max-w-md animate-scale-in">{children}</div>
-    </div>
-  );
-}
+import { AnimatedBackground } from "@/components/3d/AnimatedBackground";
+import { GlassCard } from "@/components/3d/GlassCard";
+import { motion } from "framer-motion";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -71,71 +62,97 @@ export default function Login() {
 
   if (mfaRequired) {
     return (
-      <AuthShell>
-        <div className="rounded-2xl border border-white/5 bg-dark-elevated p-8 shadow-3d">
-          <div className="text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-3d-primary">
-              <Shield className="h-7 w-7 text-white" />
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+        <AnimatedBackground />
+        <div className="relative z-10 w-full max-w-md">
+          <GlassCard glowColor="hsl(260 70% 55% / 0.2)">
+            <div className="text-center">
+              <motion.div
+                className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+                style={{
+                  background: "linear-gradient(135deg, hsl(260 70% 55%), hsl(220 80% 50%))",
+                  boxShadow: "0 15px 40px -10px hsl(260 70% 55% / 0.4)",
+                }}
+                animate={{ rotateY: [0, 10, -10, 0] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              >
+                <Shield className="h-8 w-8 text-white" />
+              </motion.div>
+              <h2 className="font-display text-2xl font-bold text-white">Two-Factor Auth</h2>
+              <p className="mt-2 text-sm text-white/50">Enter the 6-digit code from your authenticator</p>
             </div>
-            <h2 className="font-display text-2xl font-bold text-white">Two-Factor Auth</h2>
-            <p className="mt-1 text-sm text-white/50">Enter the 6-digit code from your authenticator</p>
-          </div>
-          <div className="mt-6 space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="mfa-code" className="text-white/70">Authentication Code</Label>
-              <Input id="mfa-code" type="text" inputMode="numeric" placeholder="000000"
-                className="border-white/10 bg-white/5 text-center font-mono text-lg tracking-[0.5em] text-white placeholder:text-white/20 focus:border-primary"
-                value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} maxLength={6} autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(); }}
-              />
+            <div className="mt-6 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="mfa-code" className="text-white/60 text-xs uppercase tracking-wider">Authentication Code</Label>
+                <Input id="mfa-code" type="text" inputMode="numeric" placeholder="000000"
+                  className="h-14 border-white/[0.08] bg-white/[0.04] text-center font-mono text-2xl tracking-[0.5em] text-white placeholder:text-white/15 focus:border-primary/50 focus:ring-primary/20 backdrop-blur-sm"
+                  value={mfaCode} onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6))} maxLength={6} autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter" && mfaCode.length === 6) handleMfaVerify(); }}
+                />
+              </div>
+              <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+                <Button onClick={handleMfaVerify} className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 border-0 font-bold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all" disabled={mfaCode.length !== 6 || verifyingMfa}>
+                  {verifyingMfa ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying…</> : "Verify & Sign In"}
+                </Button>
+              </motion.div>
+              <Button variant="ghost" className="w-full text-white/30 hover:text-white/60" onClick={() => { setMfaRequired(false); setMfaCode(""); supabase.auth.signOut(); }}>
+                Back to Login
+              </Button>
             </div>
-            <Button onClick={handleMfaVerify} className="w-full bg-gradient-primary border-0 font-bold shadow-3d-primary" disabled={mfaCode.length !== 6 || verifyingMfa}>
-              {verifyingMfa ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Verifying…</> : "Verify & Sign In"}
-            </Button>
-            <Button variant="ghost" className="w-full text-white/40 hover:text-white" onClick={() => { setMfaRequired(false); setMfaCode(""); supabase.auth.signOut(); }}>
-              Back to Login
-            </Button>
-          </div>
+          </GlassCard>
         </div>
-      </AuthShell>
+      </div>
     );
   }
 
   return (
-    <AuthShell>
-      <div className="rounded-2xl border border-white/5 bg-dark-elevated p-8 shadow-3d">
-        <div className="text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-primary shadow-3d-primary">
-            <GraduationCap className="h-7 w-7 text-white" />
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      <AnimatedBackground />
+      <div className="relative z-10 w-full max-w-md">
+        <GlassCard glowColor="hsl(220 80% 50% / 0.15)">
+          <div className="text-center">
+            <motion.div
+              className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl"
+              style={{
+                background: "linear-gradient(135deg, hsl(220 80% 55%), hsl(260 70% 55%))",
+                boxShadow: "0 15px 40px -10px hsl(220 80% 50% / 0.4)",
+              }}
+              whileHover={{ rotateY: 20, rotateX: -10, scale: 1.1 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+            >
+              <GraduationCap className="h-8 w-8 text-white" />
+            </motion.div>
+            <h2 className="font-display text-2xl font-bold text-white">Welcome back</h2>
+            <p className="mt-2 text-sm text-white/40">Sign in to your placement platform</p>
           </div>
-          <h2 className="font-display text-2xl font-bold text-white">Welcome back</h2>
-          <p className="mt-1 text-sm text-white/50">Sign in to your placement platform</p>
-        </div>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="email" className="text-white/70">Email</Label>
-            <Input id="email" type="email" placeholder="you@college.edu"
-              className="border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-primary"
-              value={email} onChange={(e) => setEmail(e.target.value)} required />
-          </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label htmlFor="password" className="text-white/70">Password</Label>
-              <Link to="/forgot-password" className="text-xs font-medium text-primary hover:underline">Forgot password?</Link>
+          <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="email" className="text-white/60 text-xs uppercase tracking-wider">Email</Label>
+              <Input id="email" type="email" placeholder="you@college.edu"
+                className="h-12 border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 backdrop-blur-sm"
+                value={email} onChange={(e) => setEmail(e.target.value)} required />
             </div>
-            <Input id="password" type="password"
-              className="border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-primary"
-              value={password} onChange={(e) => setPassword(e.target.value)} required />
-          </div>
-          <Button type="submit" className="w-full bg-gradient-primary border-0 font-bold shadow-3d-primary hover:opacity-90 transition-all" disabled={isLoading}>
-            {isLoading ? "Signing in…" : "Sign in"}
-          </Button>
-          <p className="text-center text-sm text-white/40">
-            Don't have an account?{" "}
-            <Link to="/signup" className="font-medium text-primary hover:underline">Sign up</Link>
-          </p>
-        </form>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password" className="text-white/60 text-xs uppercase tracking-wider">Password</Label>
+                <Link to="/forgot-password" className="text-xs font-medium text-primary/80 hover:text-primary transition-colors">Forgot password?</Link>
+              </div>
+              <Input id="password" type="password"
+                className="h-12 border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/20 focus:border-primary/50 focus:ring-primary/20 backdrop-blur-sm"
+                value={password} onChange={(e) => setPassword(e.target.value)} required />
+            </div>
+            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+              <Button type="submit" className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 border-0 font-bold shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all" disabled={isLoading}>
+                {isLoading ? "Signing in…" : "Sign in"}
+              </Button>
+            </motion.div>
+            <p className="text-center text-sm text-white/30">
+              Don't have an account?{" "}
+              <Link to="/signup" className="font-medium text-primary/80 hover:text-primary transition-colors">Sign up</Link>
+            </p>
+          </form>
+        </GlassCard>
       </div>
-    </AuthShell>
+    </div>
   );
 }
