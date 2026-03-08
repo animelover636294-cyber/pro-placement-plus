@@ -65,28 +65,44 @@ export default function Login() {
     navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
 
-  const handleGoogleSignIn = async () => {
-    setIsGoogleLoading(true);
-    try {
-      const { error } = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
-      });
-      if (error) toast.error(error.message || "Google sign-in failed");
-    } catch (err: any) {
-      toast.error(err?.message || "Google sign-in failed");
-    } finally { setIsGoogleLoading(false); }
-  };
+  function isInIframe(): boolean {
+    try { return window.self !== window.top; } catch { return true; }
+  }
 
-  const handleAppleSignIn = async () => {
-    setIsAppleLoading(true);
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
+    if (provider === "google") setIsGoogleLoading(true);
+    if (provider === "apple") setIsAppleLoading(true);
     try {
-      const { error } = await lovable.auth.signInWithOAuth("apple", {
+      const { data, error } = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
+        options: { skipBrowserRedirect: true },
       });
-      if (error) toast.error(error.message || "Apple sign-in failed");
+      if (error) throw error;
+      if (data?.url) {
+        if (isInIframe()) {
+          const popup = window.open(data.url, "oauth", "width=500,height=600");
+          if (!popup) {
+            toast.error("Please allow popups for this site to sign in.");
+          } else {
+            const messageHandler = (event: MessageEvent) => {
+              if (event.origin === window.location.origin && event.data?.type === "oauth-complete") {
+                popup?.close();
+                window.removeEventListener("message", messageHandler);
+                window.location.reload();
+              }
+            };
+            window.addEventListener("message", messageHandler);
+          }
+        } else {
+          window.location.href = data.url;
+        }
+      }
     } catch (err: any) {
-      toast.error(err?.message || "Apple sign-in failed");
-    } finally { setIsAppleLoading(false); }
+      toast.error(err?.message || `${provider} sign-in failed`);
+    } finally {
+      if (provider === "google") setIsGoogleLoading(false);
+      if (provider === "apple") setIsAppleLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
