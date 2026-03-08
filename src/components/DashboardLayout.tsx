@@ -45,16 +45,22 @@ const studentLinks = [
 function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const links = isAdmin ? adminLinks : studentLinks;
   return (
-    <Sidebar className="border-r border-white/5 bg-dark-surface">
+    <Sidebar className="border-r border-white/[0.04] bg-[hsl(222,47%,5%)]">
       <SidebarContent>
         <div className="flex items-center gap-3 px-5 py-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-primary shadow-3d-primary">
+          <div
+            className="flex h-9 w-9 items-center justify-center rounded-xl"
+            style={{
+              background: "linear-gradient(135deg, hsl(220 80% 55%), hsl(260 70% 55%))",
+              boxShadow: "0 8px 20px -5px hsl(220 80% 50% / 0.3)",
+            }}
+          >
             <GraduationCap className="h-4 w-4 text-white" />
           </div>
           <span className="font-display text-lg font-bold tracking-tight text-white">SmartPlace</span>
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/30">
+          <SidebarGroupLabel className="px-5 text-[10px] font-bold uppercase tracking-[0.15em] text-white/25">
             {isAdmin ? "Admin" : "Student"}
           </SidebarGroupLabel>
           <SidebarGroupContent className="px-3 mt-2">
@@ -65,8 +71,8 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin" || item.url === "/dashboard"}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/40 transition-all duration-200 hover:bg-white/5 hover:text-white"
-                      activeClassName="bg-gradient-primary text-white shadow-3d-primary font-semibold"
+                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-white/35 transition-all duration-200 hover:bg-white/[0.04] hover:text-white/70"
+                      activeClassName="bg-gradient-to-r from-[hsl(220,80%,55%)] to-[hsl(260,70%,55%)] text-white shadow-lg shadow-[hsl(220,80%,50%)/0.2] font-semibold"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
@@ -129,16 +135,16 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-dark-surface">
+      <div className="flex min-h-screen w-full bg-[hsl(222,47%,6%)]">
         <AppSidebar isAdmin={isAdmin} />
         <div className="flex flex-1 flex-col">
-          <header className="flex h-16 items-center justify-between border-b border-white/5 bg-dark-elevated px-6">
-            <SidebarTrigger><Menu className="h-5 w-5 text-white/50" /></SidebarTrigger>
+          <header className="flex h-16 items-center justify-between border-b border-white/[0.04] bg-[hsl(222,40%,8%)] px-6 backdrop-blur-xl">
+            <SidebarTrigger><Menu className="h-5 w-5 text-white/40" /></SidebarTrigger>
             <div className="flex items-center gap-4">
-              <span className="hidden text-sm font-medium text-white/40 sm:block">{user?.email}</span>
+              <span className="hidden text-sm font-medium text-white/30 sm:block">{user?.email}</span>
               <NotificationCenter />
               <ThemeToggle />
-              <Button variant="ghost" size="sm" className="text-white/40 hover:text-white hover:bg-white/5" onClick={handleSignOut}>
+              <Button variant="ghost" size="sm" className="text-white/30 hover:text-white/60 hover:bg-white/[0.04]" onClick={handleSignOut}>
                 <LogOut className="mr-1.5 h-4 w-4" /> Sign out
               </Button>
             </div>
@@ -149,29 +155,29 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
       <Dialog open={forceResetOpen} onOpenChange={(open) => open && setForceResetOpen(true)}>
         <DialogContent
-          className="rounded-2xl border border-white/5 bg-dark-elevated shadow-3d sm:max-w-md"
+          className="rounded-2xl border border-white/[0.06] bg-[hsl(222,40%,9%)] shadow-3d sm:max-w-md"
           onEscapeKeyDown={(e) => e.preventDefault()} onInteractOutside={(e) => e.preventDefault()}
         >
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-bold text-white">Set your new password</DialogTitle>
-            <DialogDescription className="text-white/50">For security, you must set a new password before continuing.</DialogDescription>
+            <DialogDescription className="text-white/40">For security, you must set a new password before continuing.</DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="recovery-new-password" className="text-white/70">New password</Label>
+              <Label htmlFor="recovery-new-password" className="text-white/60 text-xs uppercase tracking-wider">New password</Label>
               <Input id="recovery-new-password" type="password" placeholder="At least 6 characters"
-                className="border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-primary"
+                className="border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/20 focus:border-ring"
                 value={newPassword} onChange={(e) => setNewPassword(e.target.value)} minLength={6} required />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="recovery-confirm-password" className="text-white/70">Confirm password</Label>
+              <Label htmlFor="recovery-confirm-password" className="text-white/60 text-xs uppercase tracking-wider">Confirm password</Label>
               <Input id="recovery-confirm-password" type="password" placeholder="Repeat your password"
-                className="border-white/10 bg-white/5 text-white placeholder:text-white/20 focus:border-primary"
+                className="border-white/[0.08] bg-white/[0.04] text-white placeholder:text-white/20 focus:border-ring"
                 value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} minLength={6} required />
             </div>
           </div>
           <DialogFooter>
-            <Button className="w-full bg-gradient-primary border-0 font-bold shadow-3d-primary" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
+            <Button className="w-full bg-gradient-to-r from-primary to-primary/80 border-0 font-bold shadow-lg shadow-primary/20" onClick={handlePasswordUpdate} disabled={isUpdatingPassword}>
               {isUpdatingPassword ? "Updating…" : "Update password"}
             </Button>
           </DialogFooter>

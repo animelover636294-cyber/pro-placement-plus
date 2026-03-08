@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { CalendarDays, Trophy, ClipboardList, UserCircle } from "lucide-react";
+import { CalendarDays, Trophy, ClipboardList, UserCircle, TrendingUp, Zap } from "lucide-react";
 import { EligibilityChecker } from "@/components/EligibilityChecker";
+import { BentoCard } from "@/components/3d/BentoCard";
+import { Icon3D } from "@/components/3d/Icon3D";
+import { motion } from "framer-motion";
 
 export default function StudentDashboard() {
   const { user } = useAuth();
@@ -38,55 +40,61 @@ export default function StudentDashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+        <h1 className="font-display text-3xl font-bold tracking-tight text-white">
           Welcome, {profile?.name || "Student"}
         </h1>
-        <p className="text-muted-foreground">Your placement journey at a glance</p>
-      </div>
+        <p className="text-white/40">Your placement journey at a glance</p>
+      </motion.div>
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <UserCircle className="h-4 w-4" /> Profile Completion
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-2">
-          <Progress value={completion} className="h-3" />
-          <p className="text-sm text-muted-foreground">
-            {completion}% complete — {completion < 80 ? "Complete 80% to take tests" : "You're eligible for tests!"}
-          </p>
-        </CardContent>
-      </Card>
+      {/* Profile completion — high priority */}
+      <BentoCard priority="high" delay={0.1} className="col-span-full">
+        <div className="flex items-start gap-4">
+          <Icon3D icon={UserCircle} color="blue" size="sm" />
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-white/70 uppercase tracking-wider">Profile Completion</h3>
+            <div className="mt-3">
+              <Progress value={completion} className="h-2.5 bg-white/[0.06]" />
+            </div>
+            <p className="mt-2 text-sm text-white/40">
+              {completion}% complete — {completion < 80 ? "Complete 80% to take tests" : "You're eligible for tests!"}
+            </p>
+          </div>
+          <span className="font-display text-2xl font-bold text-white">{completion}%</span>
+        </div>
+      </BentoCard>
 
+      {/* Stats grid — bento */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Upcoming Tests</CardTitle>
-            <CalendarDays className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{upcomingTests}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Tests Completed</CardTitle>
-            <ClipboardList className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{completedTests}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Pass Rate</CardTitle>
-            <Trophy className="h-5 w-5 text-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{passRate}%</div>
-          </CardContent>
-        </Card>
+        <BentoCard priority="medium" delay={0.2}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Upcoming Tests</p>
+              <p className="mt-2 font-display text-4xl font-bold text-white">{upcomingTests}</p>
+            </div>
+            <Icon3D icon={CalendarDays} color="violet" size="sm" />
+          </div>
+        </BentoCard>
+
+        <BentoCard priority="medium" delay={0.3}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Tests Completed</p>
+              <p className="mt-2 font-display text-4xl font-bold text-white">{completedTests}</p>
+            </div>
+            <Icon3D icon={ClipboardList} color="blue" size="sm" />
+          </div>
+        </BentoCard>
+
+        <BentoCard priority={passRate > 70 ? "high" : "low"} delay={0.4}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-xs font-semibold text-white/40 uppercase tracking-wider">Pass Rate</p>
+              <p className="mt-2 font-display text-4xl font-bold text-white">{passRate}%</p>
+            </div>
+            <Icon3D icon={Trophy} color="orange" size="sm" />
+          </div>
+        </BentoCard>
       </div>
 
       <EligibilityChecker />
