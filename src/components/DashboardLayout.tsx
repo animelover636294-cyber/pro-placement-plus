@@ -103,16 +103,17 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
   // Admin session timeout
   useAdminSessionTimeout();
 
-  // Admin resume route after re-login
+  // Admin resume route after re-login (run only once on mount)
   useEffect(() => {
     if (isAdmin) {
       const resumeRoute = getAdminResumeRoute();
-      if (resumeRoute && resumeRoute !== window.location.pathname) {
-        clearAdminResumeRoute();
+      clearAdminResumeRoute();
+      if (resumeRoute && resumeRoute !== "/admin" && resumeRoute !== window.location.pathname) {
         navigate(resumeRoute, { replace: true });
       }
     }
-  }, [isAdmin, navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const handleSignOut = async () => {
     await signOut();
     toast.success("Signed out");
