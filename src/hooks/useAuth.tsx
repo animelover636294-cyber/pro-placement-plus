@@ -1,7 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { Session, User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { AUTH_REDIRECTS } from "@/lib/authRedirects";
+import { getAuthRedirects } from "@/lib/authRedirects";
 import type { Database } from "@/integrations/supabase/types";
 
 type AppRole = Database["public"]["Enums"]["app_role"];
@@ -59,11 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
-        // Skip processing for password recovery - let ResetPassword page handle it
-        if (event === "PASSWORD_RECOVERY") {
-          return;
-        }
-
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -90,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { name },
-        emailRedirectTo: AUTH_REDIRECTS.signupVerify,
+        emailRedirectTo: getAuthRedirects().signupVerify,
       },
     });
     return { error: error as Error | null };

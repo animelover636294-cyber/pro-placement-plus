@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 export default function ResetPassword() {
@@ -13,18 +12,20 @@ export default function ResetPassword() {
 
   const routeToSignedInArea = async () => {
     if (hasNavigatedRef.current) return;
+    hasNavigatedRef.current = true;
+
+    // Small delay to let useAuth pick up the session
+    await new Promise((r) => setTimeout(r, 500));
 
     const {
       data: { user },
     } = await supabase.auth.getUser();
 
     if (!user) {
-      toast.error("This reset link is invalid or expired. Please request a new one.");
-      navigate("/forgot-password", { replace: true });
+      hasNavigatedRef.current = false;
+      setErrorMessage("This reset link is invalid or expired. Please request a new one.");
       return;
     }
-
-    hasNavigatedRef.current = true;
 
     const { data: roleData } = await supabase
       .from("user_roles")
@@ -37,41 +38,35 @@ export default function ResetPassword() {
   };
 
   useEffect(() => {
-    const hasRecoveryInHash = window.location.hash.includes("type=recovery");
-    const searchParams = new URLSearchParams(window.location.search);
-    const hasRecoveryInQuery = searchParams.get("type") === "recovery";
-    const tokenHash = searchParams.get("token_hash");
-
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY") {
+      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
         routeToSignedInArea();
       }
     });
 
-    const initializeRecovery = async () => {
-      if (tokenHash && hasRecoveryInQuery) {
-        const { error } = await supabase.auth.verifyOtp({
-          type: "recovery",
-          token_hash: tokenHash,
-        });
+    // Also check if already signed in (hash-based recovery auto-signs in)
+    const checkExistingSession = async () => {
+      // Give Supabase a moment to process hash tokens
+      await new Promise((r) => setTimeout(r, 1000));
 
-        if (error) {
-          setErrorMessage("This reset link is invalid or expired. Please request a new one.");
-          return;
-        }
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
+      if (session?.user && !hasNavigatedRef.current) {
         await routeToSignedInArea();
-        return;
-      }
-
-      if (!hasRecoveryInHash && !hasRecoveryInQuery) {
-        setErrorMessage("Invalid reset link. Please request a new password reset email.");
+      } else if (!session && !hasNavigatedRef.current) {
+        // No session and no hash tokens = invalid link
+        const hasRecoveryInHash = window.location.hash.includes("type=recovery");
+        if (!hasRecoveryInHash) {
+          setErrorMessage("Invalid reset link. Please request a new password reset email.");
+        }
       }
     };
 
-    initializeRecovery();
+    checkExistingSession();
 
     return () => subscription.unsubscribe();
   }, [navigate]);

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { AUTH_REDIRECTS } from "@/lib/authRedirects";
+import { getAuthRedirects } from "@/lib/authRedirects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: AUTH_REDIRECTS.passwordRecovery,
+        redirectTo: getAuthRedirects().passwordRecovery,
       });
       if (error) throw error;
       toast.success("Password reset link sent to your email!");
