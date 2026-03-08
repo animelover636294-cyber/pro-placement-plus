@@ -43,8 +43,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         const userRole = await fetchRole(session.user.id);
+        const isRecoveryFlow =
+          window.location.pathname === "/reset-password" ||
+          window.location.hash.includes("type=recovery") ||
+          new URLSearchParams(window.location.search).get("type") === "recovery" ||
+          Boolean(new URLSearchParams(window.location.search).get("token_hash"));
+
         // Student session guard: if browser was closed, log them out
-        if (userRole === "student" && !sessionStorage.getItem("student_session_active")) {
+        // Skip this during password recovery so users can complete reset flow.
+        if (userRole === "student" && !isRecoveryFlow && !sessionStorage.getItem("student_session_active")) {
           await supabase.auth.signOut();
           setSession(null);
           setUser(null);
