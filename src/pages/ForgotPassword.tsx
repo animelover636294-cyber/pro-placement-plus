@@ -5,7 +5,6 @@ import { getAuthRedirects } from "@/lib/authRedirects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { ArrowLeft, Mail } from "lucide-react";
 
@@ -30,44 +29,35 @@ export default function ForgotPassword() {
     }
   };
 
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <Link to="/login" className="mb-4 inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden gradient-hero-bg px-4">
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 h-[400px] w-[400px] rounded-full bg-primary/10 blur-3xl animate-float" />
+        <div className="absolute -bottom-40 -left-40 h-[300px] w-[300px] rounded-full bg-accent/10 blur-3xl animate-float-delayed" />
+      </div>
+      <div className="relative z-10 w-full max-w-md animate-scale-in">
+        <div className="glass rounded-2xl p-8">
+          <Link to="/login" className="mb-6 inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             <ArrowLeft className="h-4 w-4" /> Back to login
           </Link>
-          <CardTitle className="text-2xl">Reset password</CardTitle>
-          <CardDescription>
-            Enter your email and we'll send you a link to reset your password
-          </CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSendCode}>
-          <CardContent className="space-y-4">
+          <h2 className="text-2xl font-bold">Reset password</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Enter your email and we'll send you a reset link
+          </p>
+          <form onSubmit={handleSendCode} className="mt-6 space-y-4">
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@college.edu"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="pl-9"
-                  required
-                />
+                <Input id="email" type="email" placeholder="you@college.edu" value={email} onChange={(e) => setEmail(e.target.value)} className="glass pl-9" required />
               </div>
             </div>
-          </CardContent>
-          <CardFooter>
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full gradient-bg border-0 font-semibold shadow-lg shadow-primary/25 hover:shadow-xl transition-all duration-300" disabled={isLoading}>
               {isLoading ? "Sending…" : "Send reset link"}
             </Button>
-          </CardFooter>
-        </form>
-      </Card>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
