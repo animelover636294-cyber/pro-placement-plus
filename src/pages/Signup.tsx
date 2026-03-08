@@ -98,8 +98,8 @@ export default function Signup() {
             <p className="mt-2 text-sm text-white/40">Join the smart placement platform</p>
           </div>
 
-          {/* Google Sign Up */}
-          <div className="mt-6">
+          {/* OAuth Sign Up */}
+          <div className="mt-6 space-y-3">
             <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
               <Button
                 type="button"
@@ -110,6 +110,18 @@ export default function Signup() {
               >
                 {isGoogleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <GoogleIcon />}
                 Continue with Google
+              </Button>
+            </motion.div>
+            <motion.div whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }}>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-12 border-white/[0.1] bg-white/[0.04] text-white font-medium hover:bg-white/[0.08] transition-all gap-3"
+                onClick={handleAppleSignIn}
+                disabled={isAppleLoading}
+              >
+                {isAppleLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <AppleIcon />}
+                Continue with Apple
               </Button>
             </motion.div>
           </div>
