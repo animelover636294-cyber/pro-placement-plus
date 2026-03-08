@@ -49,6 +49,7 @@ export default function Signup() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
+  const [isAppleLoading, setIsAppleLoading] = useState(false);
   const { signUp } = useAuth();
 
   const handleGoogleSignIn = async () => {
