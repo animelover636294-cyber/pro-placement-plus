@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import { APP_WEB_URL } from "@/lib/authRedirects";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
@@ -14,8 +15,8 @@ export default function ResetPassword() {
     if (hasNavigatedRef.current) return;
     hasNavigatedRef.current = true;
 
-    // Small delay to let useAuth pick up the session
-    await new Promise((r) => setTimeout(r, 500));
+    // Allow auth context time to initialize session before protected routes check.
+    await new Promise((r) => setTimeout(r, 600));
 
     const {
       data: { user },
@@ -38,6 +39,13 @@ export default function ResetPassword() {
   };
 
   useEffect(() => {
+    // If user lands on Lovable domain, force canonical Vercel domain while keeping token/hash.
+    if (window.location.origin !== APP_WEB_URL) {
+      const target = `${APP_WEB_URL}/reset-password${window.location.search}${window.location.hash}`;
+      window.location.replace(target);
+      return;
+    }
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
@@ -46,27 +54,45 @@ export default function ResetPassword() {
       }
     });
 
-    // Also check if already signed in (hash-based recovery auto-signs in)
-    const checkExistingSession = async () => {
-      // Give Supabase a moment to process hash tokens
-      await new Promise((r) => setTimeout(r, 1000));
+    const initializeRecovery = async () => {
+      const searchParams = new URLSearchParams(window.location.search);
+      const tokenHash = searchParams.get("token_hash");
+      const type = searchParams.get("type");
+      const hasRecoveryInHash = window.location.hash.includes("type=recovery");
 
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      // PKCE-style recovery links
+      if (tokenHash && type === "recovery") {
+        const { error } = await supabase.auth.verifyOtp({
+          type: "recovery",
+          token_hash: tokenHash,
+        });
 
-      if (session?.user && !hasNavigatedRef.current) {
+        if (error) {
+          setErrorMessage("This reset link is invalid or expired. Please request a new one.");
+          return;
+        }
+
         await routeToSignedInArea();
-      } else if (!session && !hasNavigatedRef.current) {
-        // No session and no hash tokens = invalid link
-        const hasRecoveryInHash = window.location.hash.includes("type=recovery");
-        if (!hasRecoveryInHash) {
-          setErrorMessage("Invalid reset link. Please request a new password reset email.");
+        return;
+      }
+
+      // Hash-based recovery links: wait for session to be established.
+      if (hasRecoveryInHash) {
+        await new Promise((r) => setTimeout(r, 1200));
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
+        if (session?.user) {
+          await routeToSignedInArea();
+          return;
         }
       }
+
+      setErrorMessage("Invalid reset link. Please request a new password reset email.");
     };
 
-    checkExistingSession();
+    initializeRecovery();
 
     return () => subscription.unsubscribe();
   }, [navigate]);
