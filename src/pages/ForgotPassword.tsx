@@ -1,32 +1,24 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { AUTH_REDIRECTS } from "@/lib/authRedirects";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { toast } from "sonner";
-import { ArrowLeft, Mail, ShieldCheck, KeyRound } from "lucide-react";
-
-type Step = "email" | "code" | "password";
+import { ArrowLeft, Mail } from "lucide-react";
 
 export default function ForgotPassword() {
-  const [step, setStep] = useState<Step>("email");
   const [email, setEmail] = useState("");
-  const [code, setCode] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
 
   const handleSendCode = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      // Use Supabase's built-in password reset which sends a recovery link
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `https://pro-placement-plus.vercel.app/reset-password`,
+        redirectTo: AUTH_REDIRECTS.passwordRecovery,
       });
       if (error) throw error;
       toast.success("Password reset link sent to your email!");
@@ -37,6 +29,7 @@ export default function ForgotPassword() {
       setIsLoading(false);
     }
   };
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
