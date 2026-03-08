@@ -8,7 +8,7 @@ interface GlassCardProps {
   intensity?: number;
 }
 
-export function GlassCard({ children, className = "", glowColor = "hsl(220 80% 50% / 0.15)", intensity = 15 }: GlassCardProps) {
+export function GlassCard({ children, className = "", glowColor = "hsl(var(--primary) / 0.15)", intensity = 15 }: GlassCardProps) {
   const ref = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
@@ -40,7 +40,7 @@ export function GlassCard({ children, className = "", glowColor = "hsl(220 80% 5
         transformStyle: "preserve-3d",
         perspective: 1200,
       }}
-      className={`relative rounded-2xl border border-white/[0.08] p-8 backdrop-blur-xl ${className}`}
+      className={`relative rounded-2xl border border-border p-8 backdrop-blur-xl ${className}`}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
@@ -49,7 +49,7 @@ export function GlassCard({ children, className = "", glowColor = "hsl(220 80% 5
       <div
         className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
-          background: `linear-gradient(135deg, hsl(220 20% 15% / 0.6), hsl(220 20% 10% / 0.4))`,
+          background: `hsl(var(--card) / 0.8)`,
           backdropFilter: "blur(40px)",
           WebkitBackdropFilter: "blur(40px)",
         }}
@@ -58,7 +58,7 @@ export function GlassCard({ children, className = "", glowColor = "hsl(220 80% 5
       <div
         className="pointer-events-none absolute inset-0 rounded-2xl"
         style={{
-          background: `linear-gradient(135deg, hsl(220 80% 60% / 0.1), transparent 50%, hsl(260 70% 55% / 0.05))`,
+          background: `linear-gradient(135deg, hsl(var(--primary) / 0.1), transparent 50%, hsl(var(--primary) / 0.05))`,
         }}
       />
       {/* Bottom glow */}

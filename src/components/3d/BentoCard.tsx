@@ -10,17 +10,17 @@ interface BentoCardProps {
 
 const priorityStyles = {
   high: {
-    shadow: "0 30px 80px -20px hsl(220 80% 50% / 0.2), 0 0 0 1px hsl(220 80% 50% / 0.1)",
+    shadow: "0 30px 80px -20px hsl(var(--primary) / 0.15), 0 0 0 1px hsl(var(--primary) / 0.1)",
     scale: 1.02,
-    glow: "hsl(220 80% 50% / 0.1)",
+    glow: "hsl(var(--primary) / 0.08)",
   },
   medium: {
-    shadow: "0 20px 60px -15px hsl(260 70% 55% / 0.15), 0 0 0 1px hsl(260 70% 55% / 0.08)",
+    shadow: "0 20px 60px -15px hsl(var(--foreground) / 0.1), 0 0 0 1px hsl(var(--border))",
     scale: 1.01,
-    glow: "hsl(260 70% 55% / 0.08)",
+    glow: "hsl(var(--foreground) / 0.03)",
   },
   low: {
-    shadow: "0 15px 40px -10px hsl(0 0% 0% / 0.3), 0 0 0 1px hsl(0 0% 100% / 0.05)",
+    shadow: "0 15px 40px -10px hsl(var(--foreground) / 0.08), 0 0 0 1px hsl(var(--border))",
     scale: 1.005,
     glow: "transparent",
   },
@@ -31,7 +31,7 @@ export function BentoCard({ children, className = "", priority = "low", delay = 
 
   return (
     <motion.div
-      className={`group relative overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.03] backdrop-blur-md transition-colors hover:border-white/[0.12] ${className}`}
+      className={`group relative overflow-hidden rounded-2xl border border-border bg-card backdrop-blur-md transition-colors hover:border-border ${className}`}
       initial={{ opacity: 0, y: 20, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.5, delay, ease: "easeOut" }}

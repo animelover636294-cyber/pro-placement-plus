@@ -16,20 +16,20 @@ export function LandingHero() {
     <section className="relative z-10 flex flex-col items-start px-6 pt-12 pb-8 lg:flex-row lg:items-center lg:px-12 lg:pt-20 lg:pb-16">
       <div className="flex-1">
         <motion.h1
-          className="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl text-white"
+          className="font-display text-5xl font-bold leading-[1.08] tracking-tight sm:text-6xl lg:text-7xl text-foreground"
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
           YOUR SMART
           <br />
-          <span className="text-white/60">PLACEMENT</span>
+          <span className="text-muted-foreground">PLACEMENT</span>
           <br />
           COMPANION
         </motion.h1>
 
         <motion.p
-          className="mt-6 max-w-md text-base leading-relaxed text-white/40"
+          className="mt-6 max-w-md text-base leading-relaxed text-muted-foreground"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
@@ -46,7 +46,7 @@ export function LandingHero() {
           <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
             <Button
               size="lg"
-              className="bg-white text-black border-0 px-8 py-6 text-base font-bold shadow-lg shadow-white/10 hover:bg-white/90 transition-all"
+              className="px-8 py-6 text-base font-bold"
               onClick={() => navigate("/signup")}
             >
               Get Started
@@ -56,7 +56,7 @@ export function LandingHero() {
             <Button
               size="lg"
               variant="outline"
-              className="border-white/[0.12] bg-white/[0.04] px-8 py-6 text-base font-semibold text-white backdrop-blur-sm hover:bg-white/[0.08] transition-all"
+              className="px-8 py-6 text-base font-semibold"
               onClick={() => navigate("/login")}
             >
               Sign in <ArrowRight className="ml-2 h-4 w-4" />
@@ -73,11 +73,11 @@ export function LandingHero() {
         >
           {stats.map((stat) => (
             <div key={stat.label}>
-              <div className="font-display text-3xl font-bold text-white">
+              <div className="font-display text-3xl font-bold text-foreground">
                 {stat.value}
-                <span className="text-white/40">{stat.suffix}</span>
+                <span className="text-muted-foreground">{stat.suffix}</span>
               </div>
-              <div className="mt-1 text-xs font-medium uppercase tracking-wider text-white/25">
+              <div className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 {stat.label}
               </div>
             </div>
@@ -90,50 +90,48 @@ export function LandingHero() {
         <div className="relative mx-auto max-w-md">
           {/* Card 1 */}
           <motion.div
-            className="absolute -left-4 top-0 z-10 w-64 rounded-2xl border border-white/[0.1] p-6 backdrop-blur-xl"
+            className="absolute -left-4 top-0 z-10 w-64 rounded-2xl border border-border bg-card/80 p-6 backdrop-blur-xl"
             style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.03))",
-              boxShadow: "0 25px 60px -15px rgba(0,0,0,0.5)",
+              boxShadow: "0 25px 60px -15px hsl(var(--foreground) / 0.15)",
             }}
             initial={{ opacity: 0, x: -40, rotateY: 20 }}
             animate={{ opacity: 1, x: 0, rotateY: 8 }}
             transition={{ delay: 0.4, duration: 0.8 }}
             whileHover={{ rotateY: 3, scale: 1.03, y: -5 }}
           >
-            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-white/10">
-              <ClipboardList className="h-5 w-5 text-white" />
+            <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-lg bg-secondary">
+              <ClipboardList className="h-5 w-5 text-foreground" />
             </div>
-            <h3 className="text-lg font-bold text-white">Smart Testing</h3>
-            <p className="mt-2 text-sm text-white/50">Randomized questions with auto-evaluation</p>
-            <div className="mt-4 flex h-8 w-8 items-center justify-center rounded-full bg-white/10">
-              <ArrowUpRight className="h-4 w-4 text-white/60" />
+            <h3 className="text-lg font-bold text-foreground">Smart Testing</h3>
+            <p className="mt-2 text-sm text-muted-foreground">Randomized questions with auto-evaluation</p>
+            <div className="mt-4 flex h-8 w-8 items-center justify-center rounded-full bg-secondary">
+              <ArrowUpRight className="h-4 w-4 text-muted-foreground" />
             </div>
           </motion.div>
 
           {/* Card 2 */}
           <motion.div
-            className="relative left-24 top-8 z-20 w-72 rounded-2xl border border-white/[0.1] p-6 backdrop-blur-xl"
+            className="relative left-24 top-8 z-20 w-72 rounded-2xl border border-border bg-card/80 p-6 backdrop-blur-xl"
             style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02))",
-              boxShadow: "0 25px 60px -15px rgba(0,0,0,0.5)",
+              boxShadow: "0 25px 60px -15px hsl(var(--foreground) / 0.15)",
             }}
             initial={{ opacity: 0, x: 40, rotateY: -20 }}
             animate={{ opacity: 1, x: 0, rotateY: -8 }}
             transition={{ delay: 0.6, duration: 0.8 }}
             whileHover={{ rotateY: -3, scale: 1.03, y: -5 }}
           >
-            <h3 className="text-xl font-bold text-white">Extensible & Secure</h3>
-            <p className="mt-3 text-sm text-white/50">Enterprise-grade security with MFA, audit logs, and role-based access</p>
-            <div className="mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/10">
-              <ArrowUpRight className="h-5 w-5 text-white/60" />
+            <h3 className="text-xl font-bold text-foreground">Extensible & Secure</h3>
+            <p className="mt-3 text-sm text-muted-foreground">Enterprise-grade security with MFA, audit logs, and role-based access</p>
+            <div className="mt-4 flex h-10 w-10 items-center justify-center rounded-full bg-secondary">
+              <ArrowUpRight className="h-5 w-5 text-muted-foreground" />
             </div>
           </motion.div>
 
           {/* Floating badge */}
           <motion.div
-            className="absolute -right-6 -top-6 z-30 flex items-center gap-1.5 rounded-full border border-white/[0.15] bg-white px-4 py-2 text-xs font-bold text-black backdrop-blur-lg"
+            className="absolute -right-6 -top-6 z-30 flex items-center gap-1.5 rounded-full border border-border bg-primary text-primary-foreground px-4 py-2 text-xs font-bold backdrop-blur-lg"
             style={{
-              boxShadow: "0 10px 30px -5px rgba(0,0,0,0.3)",
+              boxShadow: "0 10px 30px -5px hsl(var(--foreground) / 0.1)",
             }}
             initial={{ opacity: 0, scale: 0 }}
             animate={{ opacity: 1, scale: 1 }}
