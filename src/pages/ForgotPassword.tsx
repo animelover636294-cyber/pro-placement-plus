@@ -18,7 +18,7 @@ export default function ForgotPassword() {
     setIsLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: AUTH_REDIRECTS.passwordRecovery,
+        redirectTo: getAuthRedirects().passwordRecovery,
       });
       if (error) throw error;
       toast.success("Password reset link sent to your email!");

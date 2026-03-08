@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       password,
       options: {
         data: { name },
-        emailRedirectTo: AUTH_REDIRECTS.signupVerify,
+        emailRedirectTo: getAuthRedirects().signupVerify,
       },
     });
     return { error: error as Error | null };
