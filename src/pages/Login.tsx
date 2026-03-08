@@ -65,13 +65,13 @@ export default function Login() {
     navigate(roleData?.role === "admin" ? "/admin" : "/dashboard", { replace: true });
   };
 
-
   useEffect(() => {
     if (!loading && user && role) {
       navigate(role === "admin" ? "/admin" : "/dashboard", { replace: true });
     }
   }, [loading, user, role, navigate]);
 
+  const handleOAuthSignIn = async (provider: "google" | "apple") => {
     if (provider === "google") setIsGoogleLoading(true);
     if (provider === "apple") setIsAppleLoading(true);
     try {
