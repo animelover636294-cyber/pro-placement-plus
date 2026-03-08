@@ -76,7 +76,7 @@ export default function Login() {
     if (provider === "apple") setIsAppleLoading(true);
     try {
       const { error } = await lovable.auth.signInWithOAuth(provider, {
-        redirect_uri: "https://pro-placement-plus.vercel.app",
+        redirect_uri: "https://pro-placement-plus.vercel.app/login",
       });
       if (error) toast.error(error.message || `${provider} sign-in failed`);
     } catch (err: any) {
