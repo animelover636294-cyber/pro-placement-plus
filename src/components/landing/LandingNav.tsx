@@ -14,29 +14,21 @@ export function LandingNav() {
       transition={{ duration: 0.5 }}
     >
       <div className="flex items-center gap-3">
-        <motion.div
-          className="flex h-10 w-10 items-center justify-center rounded-xl"
-          style={{
-            background: "linear-gradient(135deg, hsl(220 80% 55%), hsl(260 70% 55%))",
-            boxShadow: "0 8px 25px -5px hsl(220 80% 50% / 0.4)",
-          }}
-          whileHover={{ rotateY: 20, scale: 1.1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 20 }}
-        >
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/[0.1] border border-white/[0.12]">
           <GraduationCap className="h-5 w-5 text-white" />
-        </motion.div>
-        <span className="font-display text-xl font-bold tracking-tight">SmartPlace</span>
+        </div>
+        <span className="font-display text-xl font-bold tracking-tight text-white">SmartPlace</span>
       </div>
       <nav className="hidden items-center gap-8 md:flex">
         {["Platform", "Features", "About"].map((item) => (
-          <button key={item} className="text-sm font-medium text-white/40 transition hover:text-white">
+          <button key={item} className="text-sm font-medium text-white/35 transition hover:text-white/70">
             {item}
           </button>
         ))}
       </nav>
       <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
         <Button
-          className="bg-gradient-to-r from-primary to-primary/80 border-0 font-semibold shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-all"
+          className="bg-white text-black border-0 font-semibold hover:bg-white/90 transition-all"
           onClick={() => navigate("/signup")}
         >
           Join Now
