@@ -75,45 +75,6 @@ export default function Login() {
     if (provider === "google") setIsGoogleLoading(true);
     if (provider === "apple") setIsAppleLoading(true);
     try {
-      const isCustomDomain =
-        !window.location.hostname.includes("lovable.app") &&
-        !window.location.hostname.includes("lovableproject.com");
-
-      if (isCustomDomain) {
-        const { data, error } = await supabase.auth.signInWithOAuth({
-          provider,
-          options: {
-            redirectTo: "https://pro-placement-plus.vercel.app/login",
-            skipBrowserRedirect: true,
-          },
-        });
-
-        if (error) {
-          toast.error(error.message || `${provider} sign-in failed`);
-          return;
-        }
-
-        if (!data?.url) {
-          toast.error("Unable to start OAuth flow.");
-          return;
-        }
-
-        const oauthUrl = new URL(data.url);
-        const isTrustedHost =
-          oauthUrl.protocol === "https:" &&
-          (oauthUrl.hostname === "accounts.google.com" ||
-            oauthUrl.hostname === "appleid.apple.com" ||
-            oauthUrl.hostname.endsWith(".supabase.co"));
-
-        if (!isTrustedHost) {
-          toast.error("Invalid OAuth redirect URL.");
-          return;
-        }
-
-        window.location.assign(data.url);
-        return;
-      }
-
       const { error } = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: "https://pro-placement-plus.vercel.app",
       });
