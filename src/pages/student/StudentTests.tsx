@@ -240,7 +240,7 @@ export default function StudentTests() {
     return () => { if (timerRef.current) clearInterval(timerRef.current); };
   }, [activeTest, submitted]);
 
-  // Anti-cheat: detect tab switching / visibility changes
+  // Anti-cheat: detect tab switching / visibility changes / fullscreen exit
   useEffect(() => {
     if (!activeTest || submitted) return;
 
@@ -254,8 +254,45 @@ export default function StudentTests() {
           toast.warning("⚠️ Tab switch detected! One more and your test will be auto-submitted.", { duration: 5000 });
         } else if (tabSwitchRef.current >= 2) {
           toast.error("🚫 Multiple tab switches detected. Auto-submitting your test.", { duration: 5000 });
-          handleSubmit(true); // auto-submit
+          handleSubmit(true);
         }
+      }
+    };
+
+    // Detect fullscreen exit as a violation
+    const handleFullscreenChange = () => {
+      if (!document.fullscreenElement && !submitted) {
+        fullscreenExitRef.current += 1;
+        tabSwitchRef.current += 1;
+        setTabSwitchCount(tabSwitchRef.current);
+
+        if (fullscreenExitRef.current === 1) {
+          setShowTabWarning(true);
+          toast.warning("⚠️ Exiting fullscreen is not allowed! Re-entering fullscreen. One more violation and your test will be auto-submitted.", { duration: 5000 });
+          // Re-enter fullscreen
+          document.documentElement.requestFullscreen?.().catch(() => {});
+        } else {
+          toast.error("🚫 Multiple fullscreen exit attempts. Auto-submitting your test.", { duration: 5000 });
+          handleSubmit(true);
+        }
+      }
+    };
+
+    // Block keyboard shortcuts
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Block Alt+Tab, Alt+F4, Ctrl+W, Ctrl+T, Ctrl+N, Ctrl+Shift+I, F11, Meta/Win key combos
+      if (
+        (e.altKey && (e.key === "Tab" || e.key === "F4")) ||
+        (e.ctrlKey && ["w", "t", "n", "Tab"].includes(e.key.toLowerCase())) ||
+        (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === "i") ||
+        e.key === "F11" ||
+        e.key === "Escape" ||
+        e.key === "Meta" ||
+        (e.metaKey && e.key === "Tab")
+      ) {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
       }
     };
 
@@ -270,13 +307,25 @@ export default function StudentTests() {
       e.preventDefault();
     };
 
+    // Prevent paste
+    const handlePaste = (e: ClipboardEvent) => {
+      e.preventDefault();
+      toast.warning("Pasting is disabled during the test.");
+    };
+
     document.addEventListener("visibilitychange", handleVisibilityChange);
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    document.addEventListener("keydown", handleKeyDown, true);
     document.addEventListener("copy", handleCopy);
+    document.addEventListener("paste", handlePaste);
     document.addEventListener("contextmenu", handleContextMenu);
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.removeEventListener("fullscreenchange", handleFullscreenChange);
+      document.removeEventListener("keydown", handleKeyDown, true);
       document.removeEventListener("copy", handleCopy);
+      document.removeEventListener("paste", handlePaste);
       document.removeEventListener("contextmenu", handleContextMenu);
     };
   }, [activeTest, submitted]);
