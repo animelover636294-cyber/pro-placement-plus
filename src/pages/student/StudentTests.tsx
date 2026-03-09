@@ -204,6 +204,7 @@ export default function StudentTests() {
   const [tabSwitchCount, setTabSwitchCount] = useState(0);
   const [showTabWarning, setShowTabWarning] = useState(false);
   const tabSwitchRef = useRef(0);
+  const fullscreenExitRef = useRef(0);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
