@@ -491,6 +491,10 @@ export default function StudentTests() {
   };
 
   const exitTest = () => {
+    // Exit fullscreen
+    if (document.fullscreenElement) {
+      document.exitFullscreen().catch(() => {});
+    }
     setActiveTest(null);
     setSubmitted(false);
     setResult(null);
