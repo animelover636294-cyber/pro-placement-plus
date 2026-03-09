@@ -330,7 +330,7 @@ export default function StudentTests() {
     };
   }, [activeTest, submitted]);
 
-  const startTest = (test: Test) => {
+  const startTest = async (test: Test) => {
     const bank = (test.question_bank as unknown as Question[]) ?? [];
     if (bank.length === 0) { toast.error("This test has no questions"); return; }
     const count = test.questions_per_student ?? bank.length;
@@ -347,8 +347,16 @@ export default function StudentTests() {
     setTabSwitchCount(0);
     setShowTabWarning(false);
     tabSwitchRef.current = 0;
+    fullscreenExitRef.current = 0;
     setActiveTest(test);
     submittingRef.current = false;
+
+    // Enter fullscreen
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch {
+      toast.warning("Could not enter fullscreen mode. Please allow fullscreen for the best test experience.");
+    }
   };
 
   const generateExplanations = async (qs: Question[], ans: Record<string, string>) => {
