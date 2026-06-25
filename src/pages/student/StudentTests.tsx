@@ -13,6 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert } from "lucide-react";
 import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
+import WebcamProctor from "@/components/WebcamProctor";
 
 type Test = Tables<"tests">;
 
