@@ -603,6 +603,7 @@ export default function StudentTests() {
 
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
+        <WebcamProctor active={!submitted} onAutoSubmit={() => handleSubmit(true)} />
         <div className="flex items-center justify-between border-b px-6 py-3">
           <h2 className="font-semibold">{activeTest.title}</h2>
           <div className="flex items-center gap-4">
