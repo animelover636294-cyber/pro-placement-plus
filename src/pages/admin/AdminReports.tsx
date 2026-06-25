@@ -44,7 +44,7 @@ export default function AdminReports() {
 
     const { data: attempts } = await supabase
       .from("test_attempts")
-      .select("student_id, total_score, passed, attempt_number, completed_at")
+      .select("id, student_id, total_score, passed, attempt_number, completed_at")
       .eq("test_id", selectedTest)
       .order("total_score", { ascending: false });
 
@@ -66,6 +66,7 @@ export default function AdminReports() {
     const reportRows: ReportRow[] = attempts.map((a) => {
       const p = profileMap.get(a.student_id);
       return {
+        attemptId: a.id,
         studentName: p?.name || "Unknown",
         email: p?.email || "—",
         cgpa: p?.cgpa ?? null,
@@ -79,6 +80,21 @@ export default function AdminReports() {
 
     setRows(reportRows);
     setLoading(false);
+  };
+
+  const deleteAttempt = async (attemptId: string) => {
+    const { error } = await supabase.from("test_attempts").delete().eq("id", attemptId);
+    if (error) { toast.error("Failed to delete: " + error.message); return; }
+    setRows((prev) => prev.filter((r) => r.attemptId !== attemptId));
+    toast.success("Record deleted");
+  };
+
+  const deleteAllForTest = async () => {
+    if (!selectedTest) return;
+    const { error } = await supabase.from("test_attempts").delete().eq("test_id", selectedTest);
+    if (error) { toast.error("Failed to delete: " + error.message); return; }
+    setRows([]);
+    toast.success("All records for this test were deleted");
   };
 
   const downloadCSV = () => {
