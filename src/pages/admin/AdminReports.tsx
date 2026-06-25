@@ -159,13 +159,34 @@ export default function AdminReports() {
 
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Results ({rows.length} students)
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={downloadCSV}>
-              <Download className="mr-2 h-4 w-4" /> Download CSV
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={downloadCSV}>
+                <Download className="mr-2 h-4 w-4" /> Download CSV
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete all records for this test?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently removes every attempt record for the selected test. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteAllForTest}>Delete All</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -177,11 +198,12 @@ export default function AdminReports() {
                   <TableHead>Score</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Attempt</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r, i) => (
-                  <TableRow key={i}>
+                {rows.map((r) => (
+                  <TableRow key={r.attemptId}>
                     <TableCell className="font-medium">{r.studentName}</TableCell>
                     <TableCell>{r.email}</TableCell>
                     <TableCell>{r.cgpa ?? "—"}</TableCell>
@@ -192,6 +214,27 @@ export default function AdminReports() {
                       </Badge>
                     </TableCell>
                     <TableCell>{r.attemptNumber}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this record?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Permanently delete {r.studentName}'s attempt #{r.attemptNumber}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteAttempt(r.attemptId)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
