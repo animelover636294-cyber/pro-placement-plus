@@ -17,6 +17,7 @@ import type { Tables } from "@/integrations/supabase/types";
 type Test = Tables<"tests">;
 
 interface ReportRow {
+  attemptId: string;
   studentName: string;
   email: string;
   cgpa: number | null;
