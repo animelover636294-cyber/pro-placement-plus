@@ -18,7 +18,7 @@ const GADGET_CLASSES = new Set<string>([
   "book", // often misclassified for phones/notes — treat as suspicious
 ]);
 
-const GRACE_SECONDS = 10;
+const GRACE_SECONDS = 5;
 
 interface WebcamProctorProps {
   active: boolean;
