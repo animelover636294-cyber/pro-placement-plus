@@ -6,7 +6,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
