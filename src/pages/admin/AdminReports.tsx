@@ -6,13 +6,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Download, FileText } from "lucide-react";
+import { Download, FileText, Trash2 } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Test = Tables<"tests">;
 
 interface ReportRow {
+  attemptId: string;
   studentName: string;
   email: string;
   cgpa: number | null;
@@ -39,7 +44,7 @@ export default function AdminReports() {
 
     const { data: attempts } = await supabase
       .from("test_attempts")
-      .select("student_id, total_score, passed, attempt_number, completed_at")
+      .select("id, student_id, total_score, passed, attempt_number, completed_at")
       .eq("test_id", selectedTest)
       .order("total_score", { ascending: false });
 
@@ -61,6 +66,7 @@ export default function AdminReports() {
     const reportRows: ReportRow[] = attempts.map((a) => {
       const p = profileMap.get(a.student_id);
       return {
+        attemptId: a.id,
         studentName: p?.name || "Unknown",
         email: p?.email || "—",
         cgpa: p?.cgpa ?? null,
@@ -74,6 +80,21 @@ export default function AdminReports() {
 
     setRows(reportRows);
     setLoading(false);
+  };
+
+  const deleteAttempt = async (attemptId: string) => {
+    const { error } = await supabase.from("test_attempts").delete().eq("id", attemptId);
+    if (error) { toast.error("Failed to delete: " + error.message); return; }
+    setRows((prev) => prev.filter((r) => r.attemptId !== attemptId));
+    toast.success("Record deleted");
+  };
+
+  const deleteAllForTest = async () => {
+    if (!selectedTest) return;
+    const { error } = await supabase.from("test_attempts").delete().eq("test_id", selectedTest);
+    if (error) { toast.error("Failed to delete: " + error.message); return; }
+    setRows([]);
+    toast.success("All records for this test were deleted");
   };
 
   const downloadCSV = () => {
@@ -138,13 +159,34 @@ export default function AdminReports() {
 
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
+          <CardHeader className="flex flex-row items-center justify-between gap-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
               Results ({rows.length} students)
             </CardTitle>
-            <Button variant="outline" size="sm" onClick={downloadCSV}>
-              <Download className="mr-2 h-4 w-4" /> Download CSV
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={downloadCSV}>
+                <Download className="mr-2 h-4 w-4" /> Download CSV
+              </Button>
+              <AlertDialog>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm">
+                    <Trash2 className="mr-2 h-4 w-4" /> Delete All
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Delete all records for this test?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      This permanently removes every attempt record for the selected test. This action cannot be undone.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AlertDialogAction onClick={deleteAllForTest}>Delete All</AlertDialogAction>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            </div>
           </CardHeader>
           <CardContent className="p-0">
             <Table>
@@ -156,11 +198,12 @@ export default function AdminReports() {
                   <TableHead>Score</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Attempt</TableHead>
+                  <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r, i) => (
-                  <TableRow key={i}>
+                {rows.map((r) => (
+                  <TableRow key={r.attemptId}>
                     <TableCell className="font-medium">{r.studentName}</TableCell>
                     <TableCell>{r.email}</TableCell>
                     <TableCell>{r.cgpa ?? "—"}</TableCell>
@@ -171,6 +214,27 @@ export default function AdminReports() {
                       </Badge>
                     </TableCell>
                     <TableCell>{r.attemptNumber}</TableCell>
+                    <TableCell>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete this record?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Permanently delete {r.studentName}'s attempt #{r.attemptNumber}.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => deleteAttempt(r.attemptId)}>Delete</AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>

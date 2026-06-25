@@ -18,7 +18,7 @@ const GADGET_CLASSES = new Set<string>([
   "book", // often misclassified for phones/notes — treat as suspicious
 ]);
 
-const GRACE_SECONDS = 10;
+const GRACE_SECONDS = 5;
 
 interface WebcamProctorProps {
   active: boolean;
@@ -32,6 +32,7 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
   const detectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
+  const warnedOnceRef = useRef(false);
 
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
@@ -86,13 +87,22 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
 
     const runDetection = async () => {
       if (!modelRef.current || !videoRef.current || videoRef.current.readyState < 2) return;
+      if (submittedRef.current) return;
       try {
         const preds = await modelRef.current.detect(videoRef.current);
         const gadget = preds.find((p) => p.score > 0.55 && GADGET_CLASSES.has(p.class));
         if (gadget) {
+          // Second offense: already warned once and cleared — submit immediately.
+          if (warnedOnceRef.current && !detectedGadgetRef.current) {
+            if (!submittedRef.current) {
+              submittedRef.current = true;
+              toast.error(`🚫 Gadget detected again (${gadget.class}). Auto-submitting your test.`);
+              onAutoSubmit();
+            }
+            return;
+          }
           setDetectedGadget((curr) => curr ?? gadget.class);
         } else {
-          // Cleared
           setDetectedGadget(null);
         }
       } catch {
@@ -104,9 +114,15 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
     return () => {
       if (detectIntervalRef.current) clearInterval(detectIntervalRef.current);
     };
-  }, [active, cameraReady]);
+  }, [active, cameraReady, onAutoSubmit]);
 
-  // Countdown when gadget detected
+  // Track latest detectedGadget in a ref so detection loop can read it
+  const detectedGadgetRef = useRef<string | null>(null);
+  useEffect(() => {
+    detectedGadgetRef.current = detectedGadget;
+  }, [detectedGadget]);
+
+  // Countdown when gadget detected (first offense only)
   useEffect(() => {
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
@@ -118,7 +134,9 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
       return;
     }
 
-    toast.warning(`⚠️ Digital gadget detected (${detectedGadget}). Remove it within ${GRACE_SECONDS} seconds or the test will be auto-submitted.`);
+    // Mark that the candidate has now received their single warning.
+    warnedOnceRef.current = true;
+    toast.warning(`⚠️ Digital gadget detected (${detectedGadget}). Remove it within ${GRACE_SECONDS} seconds — next time the test will auto-submit immediately.`);
     setCountdown(GRACE_SECONDS);
 
     countdownIntervalRef.current = setInterval(() => {
