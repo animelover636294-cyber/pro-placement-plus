@@ -32,6 +32,7 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
   const detectIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
+  const warnedOnceRef = useRef(false);
 
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
