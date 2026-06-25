@@ -13,6 +13,7 @@ import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert } from "lucide-react";
 import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
+import WebcamProctor from "@/components/WebcamProctor";
 
 type Test = Tables<"tests">;
 
@@ -333,6 +334,18 @@ export default function StudentTests() {
   const startTest = async (test: Test) => {
     const bank = (test.question_bank as unknown as Question[]) ?? [];
     if (bank.length === 0) { toast.error("This test has no questions"); return; }
+
+    // Request webcam permission BEFORE starting the test (proctoring requirement)
+    let webcamStream: MediaStream | null = null;
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      // Release the probe stream immediately; WebcamProctor will request its own.
+      webcamStream.getTracks().forEach((t) => t.stop());
+    } catch {
+      toast.error("Webcam access is required to take this test. Please allow camera access and try again.");
+      return;
+    }
+
     const count = test.questions_per_student ?? bank.length;
     const selected = shuffle(bank).slice(0, count);
     setQuestions(selected);
@@ -590,6 +603,7 @@ export default function StudentTests() {
 
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
+        <WebcamProctor active={!submitted} onAutoSubmit={() => handleSubmit(true)} />
         <div className="flex items-center justify-between border-b px-6 py-3">
           <h2 className="font-semibold">{activeTest.title}</h2>
           <div className="flex items-center gap-4">
