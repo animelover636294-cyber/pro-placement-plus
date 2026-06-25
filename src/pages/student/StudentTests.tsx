@@ -334,6 +334,18 @@ export default function StudentTests() {
   const startTest = async (test: Test) => {
     const bank = (test.question_bank as unknown as Question[]) ?? [];
     if (bank.length === 0) { toast.error("This test has no questions"); return; }
+
+    // Request webcam permission BEFORE starting the test (proctoring requirement)
+    let webcamStream: MediaStream | null = null;
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      // Release the probe stream immediately; WebcamProctor will request its own.
+      webcamStream.getTracks().forEach((t) => t.stop());
+    } catch {
+      toast.error("Webcam access is required to take this test. Please allow camera access and try again.");
+      return;
+    }
+
     const count = test.questions_per_student ?? bank.length;
     const selected = shuffle(bank).slice(0, count);
     setQuestions(selected);
