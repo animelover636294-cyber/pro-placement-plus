@@ -291,7 +291,7 @@ export default function AdminTests() {
       toast.success("Test updated");
       auditLog("test_updated", "tests", editing.id, { title: form.title });
     } else {
-      const { data: newTest, error } = await supabase.from("tests").insert(payload).select().single();
+      const { data: newTest, error } = await (supabase.from("tests") as any).insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
       toast.success("Test created");
       auditLog("test_created", "tests", newTest.id, { title: form.title });
