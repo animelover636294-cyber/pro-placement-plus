@@ -113,17 +113,25 @@ export default function AdminReports() {
   const downloadCSV = () => {
     if (rows.length === 0) { toast.error("No data to export"); return; }
     const test = tests.find((t) => t.id === selectedTest);
-    const headers = ["Name", "Email", "CGPA", "Score", "Status", "Attempt", "Completed At", "Resume URL"];
-    const csvRows = rows.map((r) => [
-      r.studentName,
-      r.email,
-      r.cgpa ?? "",
-      r.totalScore ?? "",
-      r.passed ? "Passed" : "Failed",
-      r.attemptNumber,
-      r.completedAt ? format(new Date(r.completedAt), "yyyy-MM-dd HH:mm") : "",
-      r.resumeUrl ?? "",
-    ]);
+    const headers = ["Name", "Email", "CGPA", "Score", "Status", "Attempt", "Completed At", "Auto-Submitted", "Proctor Warnings", "Gadgets Detected", "Retake Reason", "Resume URL"];
+    const csvRows = rows.map((r) => {
+      const warnings = r.proctorEvents.filter((e) => e.action === "warning").length;
+      const gadgets = [...new Set(r.proctorEvents.map((e) => e.gadget))].join("; ");
+      return [
+        r.studentName,
+        r.email,
+        r.cgpa ?? "",
+        r.totalScore ?? "",
+        r.passed ? "Passed" : "Failed",
+        r.attemptNumber,
+        r.completedAt ? format(new Date(r.completedAt), "yyyy-MM-dd HH:mm") : "",
+        r.autoSubmitted ? "Yes" : "No",
+        warnings,
+        gadgets,
+        (r.retakeReason ?? "").replace(/"/g, "'"),
+        r.resumeUrl ?? "",
+      ];
+    });
 
     const csv = [headers.join(","), ...csvRows.map((r) => r.map((v) => `"${v}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
