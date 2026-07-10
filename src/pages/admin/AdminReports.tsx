@@ -257,6 +257,7 @@ export default function AdminReports() {
                         );
                       })()}
                     </TableCell>
+                    <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
