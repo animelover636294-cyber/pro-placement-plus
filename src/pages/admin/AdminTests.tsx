@@ -412,7 +412,35 @@ export default function AdminTests() {
                     <Input type="number" value={form.min_score_percent} onChange={(e) => setForm({ ...form, min_score_percent: e.target.value })} />
                   </div>
                 </div>
+
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold">Proctor Settings</h4>
+                    <p className="text-xs text-muted-foreground">Configure the webcam-based gadget detection for this test.</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label>Warning grace (sec)</Label>
+                      <Input type="number" value={form.warning_delay_seconds} onChange={(e) => setForm({ ...form, warning_delay_seconds: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Detection interval (ms)</Label>
+                      <Input type="number" value={form.detection_interval_ms} onChange={(e) => setForm({ ...form, detection_interval_ms: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>2nd offense</Label>
+                      <Select value={form.second_offense_action} onValueChange={(v) => setForm({ ...form, second_offense_action: v as "submit" | "warn" })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="submit">Auto-submit</SelectItem>
+                          <SelectItem value="warn">Warn again</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
+
 
               <TabsContent value="questions" className="space-y-4 pt-4">
                 {/* AI Generation & File Upload */}
