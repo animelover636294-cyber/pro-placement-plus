@@ -343,18 +343,20 @@ export default function StudentTests() {
     };
   }, [activeTest, submitted]);
 
-  const startTest = async (test: Test) => {
-    const bank = (test.question_bank as unknown as Question[]) ?? [];
+  const startTest = async (test: Test, isRetake = false) => {
+    // Determine which bank to use
+    const mainBank = (test.question_bank as unknown as Question[]) ?? [];
+    const retakeBank = ((test as unknown as { retake_question_bank?: Question[] }).retake_question_bank) ?? [];
+    const bank = isRetake && retakeBank.length > 0 ? retakeBank : mainBank;
     if (bank.length === 0) { toast.error("This test has no questions"); return; }
 
-    // Request webcam permission BEFORE starting the test (proctoring requirement)
+    // Request webcam permission BEFORE starting the test
     let webcamStream: MediaStream | null = null;
     try {
       webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      // Release the probe stream immediately; WebcamProctor will request its own.
       webcamStream.getTracks().forEach((t) => t.stop());
     } catch {
-      toast.error("Webcam access is required to take this test. Please allow camera access and try again.");
+      setCameraDeniedTest(test);
       return;
     }
 
@@ -373,15 +375,38 @@ export default function StudentTests() {
     setShowTabWarning(false);
     tabSwitchRef.current = 0;
     fullscreenExitRef.current = 0;
+    proctorEventsRef.current = [];
+    retakeReasonRef.current = isRetake ? retakeReason : null;
     setActiveTest(test);
     submittingRef.current = false;
 
-    // Enter fullscreen
     try {
       await document.documentElement.requestFullscreen();
     } catch {
       toast.warning("Could not enter fullscreen mode. Please allow fullscreen for the best test experience.");
     }
+  };
+
+  const handleStartClick = (test: Test) => {
+    const attempts = attemptCounts[test.id] ?? 0;
+    if (attempts > 0) {
+      // Retake — require reason
+      setRetakeReason("");
+      setRetakeDialogTest(test);
+    } else {
+      startTest(test, false);
+    }
+  };
+
+  const confirmRetake = async () => {
+    if (retakeReason.trim().length < 10) {
+      toast.error("Please provide a reason (at least 10 characters).");
+      return;
+    }
+    const test = retakeDialogTest;
+    if (!test) return;
+    setRetakeDialogTest(null);
+    await startTest(test, true);
   };
 
   const generateExplanations = async (qs: Question[], ans: Record<string, string>) => {
