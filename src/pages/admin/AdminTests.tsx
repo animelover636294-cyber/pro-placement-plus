@@ -90,9 +90,13 @@ export default function AdminTests() {
     company_id: "",
     questions_per_student: "25",
     min_score_percent: "60",
+    warning_delay_seconds: "5",
+    second_offense_action: "submit" as "submit" | "warn",
+    detection_interval_ms: "1500",
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [retakeQuestions, setRetakeQuestions] = useState<Question[]>([]);
   const [qForm, setQForm] = useState<Partial<Question>>({
     type: "mcq", subject: "", topic: "", text: "", options: ["", "", "", ""], correct_answer: "", points: 1,
   });
@@ -119,8 +123,9 @@ export default function AdminTests() {
   useEffect(() => { fetchTests(); fetchCompanies(); }, []);
 
   const resetForm = () => {
-    setForm({ title: "", scheduled_date: "", duration: "60", max_participants: "100", company_id: "", questions_per_student: "25", min_score_percent: "60" });
+    setForm({ title: "", scheduled_date: "", duration: "60", max_participants: "100", company_id: "", questions_per_student: "25", min_score_percent: "60", warning_delay_seconds: "5", second_offense_action: "submit", detection_interval_ms: "1500" });
     setQuestions([]);
+    setRetakeQuestions([]);
     setEditing(null);
     setEditingQuestion(null);
   };
@@ -261,6 +266,12 @@ export default function AdminTests() {
     // Convert local datetime to ISO
     const scheduledISO = localDatetimeToISO(form.scheduled_date);
 
+    const proctorConfig = {
+      warning_delay_seconds: parseInt(form.warning_delay_seconds) || 5,
+      second_offense_action: form.second_offense_action,
+      detection_interval_ms: parseInt(form.detection_interval_ms) || 1500,
+    };
+
     const payload = {
       title: form.title,
       scheduled_date: scheduledISO,
@@ -269,16 +280,18 @@ export default function AdminTests() {
       company_id: form.company_id || null,
       questions_per_student: parseInt(form.questions_per_student) || 25,
       question_bank: JSON.parse(JSON.stringify(questions)),
+      retake_question_bank: JSON.parse(JSON.stringify(retakeQuestions)),
       pass_criteria: JSON.parse(JSON.stringify(passCriteria)),
-    };
+      proctor_config: JSON.parse(JSON.stringify(proctorConfig)),
+    } as Record<string, unknown>;
 
     if (editing) {
-      const { error } = await supabase.from("tests").update(payload).eq("id", editing.id);
+      const { error } = await (supabase.from("tests") as any).update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Test updated");
       auditLog("test_updated", "tests", editing.id, { title: form.title });
     } else {
-      const { data: newTest, error } = await supabase.from("tests").insert(payload).select().single();
+      const { data: newTest, error } = await (supabase.from("tests") as any).insert(payload).select().single();
       if (error) { toast.error(error.message); return; }
       toast.success("Test created");
       auditLog("test_created", "tests", newTest.id, { title: form.title });
@@ -301,7 +314,7 @@ export default function AdminTests() {
 
   const handleEdit = (t: Test) => {
     const criteria = (t.pass_criteria as Record<string, number>) ?? {};
-    // Convert the stored ISO date back to local datetime-local format
+    const proctorCfg = ((t as unknown as { proctor_config?: { warning_delay_seconds?: number; second_offense_action?: "submit" | "warn"; detection_interval_ms?: number } }).proctor_config) ?? {};
     const localDate = toLocalDatetimeString(new Date(t.scheduled_date));
     setForm({
       title: t.title,
@@ -311,8 +324,12 @@ export default function AdminTests() {
       company_id: t.company_id ?? "",
       questions_per_student: String(t.questions_per_student ?? "25"),
       min_score_percent: String(criteria.min_score_percent ?? "60"),
+      warning_delay_seconds: String(proctorCfg.warning_delay_seconds ?? 5),
+      second_offense_action: (proctorCfg.second_offense_action ?? "submit"),
+      detection_interval_ms: String(proctorCfg.detection_interval_ms ?? 1500),
     });
     setQuestions(((t.question_bank as unknown as Question[]) ?? []));
+    setRetakeQuestions((((t as unknown as { retake_question_bank?: Question[] }).retake_question_bank)) ?? []);
     setEditing(t);
     setOpen(true);
   };
@@ -352,6 +369,7 @@ export default function AdminTests() {
               <TabsList className="w-full">
                 <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
                 <TabsTrigger value="questions" className="flex-1">Questions ({questions.length})</TabsTrigger>
+                <TabsTrigger value="retake" className="flex-1">Retake Bank ({retakeQuestions.length})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4 pt-4">
@@ -395,7 +413,35 @@ export default function AdminTests() {
                     <Input type="number" value={form.min_score_percent} onChange={(e) => setForm({ ...form, min_score_percent: e.target.value })} />
                   </div>
                 </div>
+
+                <div className="rounded-lg border p-4 space-y-3">
+                  <div>
+                    <h4 className="text-sm font-semibold">Proctor Settings</h4>
+                    <p className="text-xs text-muted-foreground">Configure the webcam-based gadget detection for this test.</p>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2">
+                      <Label>Warning grace (sec)</Label>
+                      <Input type="number" value={form.warning_delay_seconds} onChange={(e) => setForm({ ...form, warning_delay_seconds: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Detection interval (ms)</Label>
+                      <Input type="number" value={form.detection_interval_ms} onChange={(e) => setForm({ ...form, detection_interval_ms: e.target.value })} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>2nd offense</Label>
+                      <Select value={form.second_offense_action} onValueChange={(v) => setForm({ ...form, second_offense_action: v as "submit" | "warn" })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="submit">Auto-submit</SelectItem>
+                          <SelectItem value="warn">Warn again</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
+
 
               <TabsContent value="questions" className="space-y-4 pt-4">
                 {/* AI Generation & File Upload */}
@@ -526,6 +572,78 @@ export default function AdminTests() {
                       </div>
                     ))}
                   </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="retake" className="space-y-4 pt-4">
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                  <p className="font-medium">Retake question bank</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Students retaking this test will receive a randomized set drawn from this bank instead of the main bank.
+                    Leave empty to reuse the main bank for retakes.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setRetakeQuestions([...retakeQuestions, ...questions.map((q) => ({ ...q, id: crypto.randomUUID() }))]); toast.success("Copied main bank into retake bank"); }}
+                    disabled={questions.length === 0}
+                  >
+                    Copy from main bank
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (!aiSubject.trim()) { toast.error("Enter a subject in the Questions tab first"); return; }
+                      setAiLoading(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("generate-questions", {
+                          body: { subject: aiSubject, topic: aiTopic, count: parseInt(aiCount) || 5, type: aiType },
+                        });
+                        if (error) throw error;
+                        const generated = (data?.questions || []) as Question[];
+                        setRetakeQuestions([...retakeQuestions, ...generated]);
+                        toast.success(`${generated.length} retake questions generated`);
+                      } catch (err) {
+                        toast.error("Failed: " + (err as Error).message);
+                      }
+                      setAiLoading(false);
+                    }}
+                    disabled={aiLoading}
+                  >
+                    {aiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate with AI (uses Questions-tab subject)
+                  </Button>
+                  {retakeQuestions.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setRetakeQuestions([])}>
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+
+                {retakeQuestions.length > 0 ? (
+                  <div className="space-y-2">
+                    {retakeQuestions.map((q, i) => (
+                      <div key={q.id} className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-xs font-medium text-muted-foreground">#{i + 1}</span>
+                          <Badge variant="secondary">{q.type.toUpperCase()}</Badge>
+                          <Badge variant="outline">{q.subject}</Badge>
+                          <span className="truncate text-sm">{q.text}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setRetakeQuestions(retakeQuestions.filter((x) => x.id !== q.id))}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    No retake questions yet. Students retaking will get the main bank re-shuffled.
+                  </p>
                 )}
               </TabsContent>
             </Tabs>

@@ -5,8 +5,6 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
 
-// COCO-SSD classes treated as "digital gadgets" — if any of these are visible
-// in the candidate's webcam feed, we trigger the warning + auto-submit flow.
 const GADGET_CLASSES = new Set<string>([
   "cell phone",
   "laptop",
@@ -15,17 +13,38 @@ const GADGET_CLASSES = new Set<string>([
   "keyboard",
   "mouse",
   "tablet",
-  "book", // often misclassified for phones/notes — treat as suspicious
+  "book",
 ]);
 
-const GRACE_SECONDS = 5;
+export interface ProctorEvent {
+  timestamp: string;
+  gadget: string;
+  action: "warning" | "auto_submit";
+}
+
+export interface ProctorConfig {
+  warning_delay_seconds: number;
+  second_offense_action: "submit" | "warn";
+  detection_interval_ms: number;
+}
 
 interface WebcamProctorProps {
   active: boolean;
   onAutoSubmit: () => void;
+  onEvent?: (event: ProctorEvent) => void;
+  config?: Partial<ProctorConfig>;
 }
 
-export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorProps) {
+const DEFAULT_CONFIG: ProctorConfig = {
+  warning_delay_seconds: 5,
+  second_offense_action: "submit",
+  detection_interval_ms: 1500,
+};
+
+export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }: WebcamProctorProps) {
+  const cfg: ProctorConfig = { ...DEFAULT_CONFIG, ...(config || {}) };
+  const graceSeconds = cfg.warning_delay_seconds;
+
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const modelRef = useRef<cocoSsd.ObjectDetection | null>(null);
@@ -33,13 +52,14 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
   const warnedOnceRef = useRef(false);
+  const onEventRef = useRef(onEvent);
+  useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
   const [cameraReady, setCameraReady] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [detectedGadget, setDetectedGadget] = useState<string | null>(null);
-  const [countdown, setCountdown] = useState<number>(GRACE_SECONDS);
+  const [countdown, setCountdown] = useState<number>(graceSeconds);
 
-  // Initialize camera + model
   useEffect(() => {
     if (!active) return;
     let cancelled = false;
@@ -60,7 +80,6 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
           await videoRef.current.play().catch(() => {});
         }
         setCameraReady(true);
-
         const model = await cocoSsd.load();
         if (cancelled) return;
         modelRef.current = model;
@@ -81,7 +100,9 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
     };
   }, [active]);
 
-  // Run detection loop
+  const detectedGadgetRef = useRef<string | null>(null);
+  useEffect(() => { detectedGadgetRef.current = detectedGadget; }, [detectedGadget]);
+
   useEffect(() => {
     if (!active || !cameraReady) return;
 
@@ -92,12 +113,14 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
         const preds = await modelRef.current.detect(videoRef.current);
         const gadget = preds.find((p) => p.score > 0.55 && GADGET_CLASSES.has(p.class));
         if (gadget) {
-          // Second offense: already warned once and cleared — submit immediately.
           if (warnedOnceRef.current && !detectedGadgetRef.current) {
-            if (!submittedRef.current) {
+            if (cfg.second_offense_action === "submit" && !submittedRef.current) {
               submittedRef.current = true;
+              onEventRef.current?.({ timestamp: new Date().toISOString(), gadget: gadget.class, action: "auto_submit" });
               toast.error(`🚫 Gadget detected again (${gadget.class}). Auto-submitting your test.`);
               onAutoSubmit();
+            } else {
+              setDetectedGadget((curr) => curr ?? gadget.class);
             }
             return;
           }
@@ -105,39 +128,26 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
         } else {
           setDetectedGadget(null);
         }
-      } catch {
-        // ignore detection errors
-      }
+      } catch { /* ignore */ }
     };
 
-    detectIntervalRef.current = setInterval(runDetection, 1500);
-    return () => {
-      if (detectIntervalRef.current) clearInterval(detectIntervalRef.current);
-    };
-  }, [active, cameraReady, onAutoSubmit]);
+    detectIntervalRef.current = setInterval(runDetection, cfg.detection_interval_ms);
+    return () => { if (detectIntervalRef.current) clearInterval(detectIntervalRef.current); };
+  }, [active, cameraReady, onAutoSubmit, cfg.detection_interval_ms, cfg.second_offense_action]);
 
-  // Track latest detectedGadget in a ref so detection loop can read it
-  const detectedGadgetRef = useRef<string | null>(null);
-  useEffect(() => {
-    detectedGadgetRef.current = detectedGadget;
-  }, [detectedGadget]);
-
-  // Countdown when gadget detected (first offense only)
   useEffect(() => {
     if (countdownIntervalRef.current) {
       clearInterval(countdownIntervalRef.current);
       countdownIntervalRef.current = null;
     }
-
     if (!detectedGadget) {
-      setCountdown(GRACE_SECONDS);
+      setCountdown(graceSeconds);
       return;
     }
-
-    // Mark that the candidate has now received their single warning.
     warnedOnceRef.current = true;
-    toast.warning(`⚠️ Digital gadget detected (${detectedGadget}). Remove it within ${GRACE_SECONDS} seconds — next time the test will auto-submit immediately.`);
-    setCountdown(GRACE_SECONDS);
+    onEventRef.current?.({ timestamp: new Date().toISOString(), gadget: detectedGadget, action: "warning" });
+    toast.warning(`⚠️ Digital gadget detected (${detectedGadget}). Remove it within ${graceSeconds} seconds.`);
+    setCountdown(graceSeconds);
 
     countdownIntervalRef.current = setInterval(() => {
       setCountdown((prev) => {
@@ -145,6 +155,7 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
           if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
           if (!submittedRef.current) {
             submittedRef.current = true;
+            onEventRef.current?.({ timestamp: new Date().toISOString(), gadget: detectedGadget, action: "auto_submit" });
             toast.error("🚫 Gadget not removed in time. Auto-submitting your test.");
             onAutoSubmit();
           }
@@ -154,17 +165,15 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
       });
     }, 1000);
 
-    return () => {
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-    };
-  }, [detectedGadget, onAutoSubmit]);
+    return () => { if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current); };
+  }, [detectedGadget, onAutoSubmit, graceSeconds]);
 
   if (!active) return null;
 
   return (
     <>
-      {/* Floating webcam preview (bottom-right) */}
-      <div className="fixed bottom-4 right-4 z-[60] w-48 overflow-hidden rounded-lg border-2 border-primary/40 bg-black shadow-lg">
+      {/* Floating webcam preview (bottom-left so it doesn't overlap nav buttons) */}
+      <div className="fixed bottom-4 left-4 z-[60] w-48 overflow-hidden rounded-lg border-2 border-primary/40 bg-black shadow-lg">
         <div className="flex items-center justify-between bg-background/80 px-2 py-1 text-xs">
           <span className="flex items-center gap-1 font-medium">
             {cameraReady ? <Video className="h-3 w-3 text-green-500" /> : <VideoOff className="h-3 w-3 text-destructive" />}
@@ -178,7 +187,6 @@ export default function WebcamProctor({ active, onAutoSubmit }: WebcamProctorPro
         )}
       </div>
 
-      {/* Gadget detected warning banner */}
       {detectedGadget && (
         <div className="fixed left-1/2 top-4 z-[60] w-full max-w-xl -translate-x-1/2 px-4">
           <Alert variant="destructive" className="border-2 shadow-2xl">

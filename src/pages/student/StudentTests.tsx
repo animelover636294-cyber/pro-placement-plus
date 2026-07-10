@@ -10,10 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert, Camera, RefreshCw } from "lucide-react";
 import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
-import WebcamProctor from "@/components/WebcamProctor";
+import WebcamProctor, { type ProctorEvent, type ProctorConfig } from "@/components/WebcamProctor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 type Test = Tables<"tests">;
 
@@ -207,6 +208,17 @@ export default function StudentTests() {
   const tabSwitchRef = useRef(0);
   const fullscreenExitRef = useRef(0);
 
+  // Proctor events collected during the attempt
+  const proctorEventsRef = useRef<ProctorEvent[]>([]);
+
+  // Retake reason dialog state
+  const [retakeDialogTest, setRetakeDialogTest] = useState<Test | null>(null);
+  const [retakeReason, setRetakeReason] = useState("");
+  const retakeReasonRef = useRef<string | null>(null);
+
+  // Camera permission state
+  const [cameraDeniedTest, setCameraDeniedTest] = useState<Test | null>(null);
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     const [testsRes, attemptsRes, profileRes] = await Promise.all([
@@ -331,18 +343,20 @@ export default function StudentTests() {
     };
   }, [activeTest, submitted]);
 
-  const startTest = async (test: Test) => {
-    const bank = (test.question_bank as unknown as Question[]) ?? [];
+  const startTest = async (test: Test, isRetake = false) => {
+    // Determine which bank to use
+    const mainBank = (test.question_bank as unknown as Question[]) ?? [];
+    const retakeBank = ((test as unknown as { retake_question_bank?: Question[] }).retake_question_bank) ?? [];
+    const bank = isRetake && retakeBank.length > 0 ? retakeBank : mainBank;
     if (bank.length === 0) { toast.error("This test has no questions"); return; }
 
-    // Request webcam permission BEFORE starting the test (proctoring requirement)
+    // Request webcam permission BEFORE starting the test
     let webcamStream: MediaStream | null = null;
     try {
       webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-      // Release the probe stream immediately; WebcamProctor will request its own.
       webcamStream.getTracks().forEach((t) => t.stop());
     } catch {
-      toast.error("Webcam access is required to take this test. Please allow camera access and try again.");
+      setCameraDeniedTest(test);
       return;
     }
 
@@ -361,15 +375,38 @@ export default function StudentTests() {
     setShowTabWarning(false);
     tabSwitchRef.current = 0;
     fullscreenExitRef.current = 0;
+    proctorEventsRef.current = [];
+    retakeReasonRef.current = isRetake ? retakeReason : null;
     setActiveTest(test);
     submittingRef.current = false;
 
-    // Enter fullscreen
     try {
       await document.documentElement.requestFullscreen();
     } catch {
       toast.warning("Could not enter fullscreen mode. Please allow fullscreen for the best test experience.");
     }
+  };
+
+  const handleStartClick = (test: Test) => {
+    const attempts = attemptCounts[test.id] ?? 0;
+    if (attempts > 0) {
+      // Retake — require reason
+      setRetakeReason("");
+      setRetakeDialogTest(test);
+    } else {
+      startTest(test, false);
+    }
+  };
+
+  const confirmRetake = async () => {
+    if (retakeReason.trim().length < 10) {
+      toast.error("Please provide a reason (at least 10 characters).");
+      return;
+    }
+    const test = retakeDialogTest;
+    if (!test) return;
+    setRetakeDialogTest(null);
+    await startTest(test, true);
   };
 
   const generateExplanations = async (qs: Question[], ans: Record<string, string>) => {
@@ -475,6 +512,8 @@ export default function StudentTests() {
       completed_at: new Date().toISOString(),
       tab_switches: tabSwitchRef.current,
       auto_submitted: autoSubmitted,
+      proctor_events: JSON.parse(JSON.stringify(proctorEventsRef.current)),
+      retake_reason: retakeReasonRef.current,
     };
     const { error } = await (supabase.from("test_attempts") as any).insert(insertPayload);
 
@@ -601,20 +640,28 @@ export default function StudentTests() {
     const q = questions[currentIdx];
     const isLowTime = timeLeft < 60;
 
+    const proctorCfg = ((activeTest as unknown as { proctor_config?: Partial<ProctorConfig> }).proctor_config) ?? undefined;
+    const answeredCount = questions.filter((qq) => (answers[qq.id] ?? "").trim().length > 0).length;
+
     return (
       <div className="fixed inset-0 z-50 flex flex-col bg-background">
-        <WebcamProctor active={!submitted} onAutoSubmit={() => handleSubmit(true)} />
+        <WebcamProctor
+          active={!submitted}
+          onAutoSubmit={() => handleSubmit(true)}
+          onEvent={(ev) => { proctorEventsRef.current.push(ev); }}
+          config={proctorCfg}
+        />
         <div className="flex items-center justify-between border-b px-6 py-3">
           <h2 className="font-semibold">{activeTest.title}</h2>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">{currentIdx + 1} / {questions.length}</span>
+            <span className="text-sm text-muted-foreground">Answered {answeredCount} / {questions.length}</span>
             <Badge variant={isLowTime ? "destructive" : "secondary"} className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
               {formatTime(timeLeft)}
             </Badge>
           </div>
         </div>
-        <Progress value={((currentIdx + 1) / questions.length) * 100} className="h-1 rounded-none" />
+        <Progress value={(answeredCount / questions.length) * 100} className="h-1 rounded-none" />
         {showTabWarning && (
           <Alert variant="destructive" className="mx-6 mt-3">
             <ShieldAlert className="h-4 w-4" />
@@ -624,48 +671,93 @@ export default function StudentTests() {
             </AlertDescription>
           </Alert>
         )}
-        <div className="flex-1 overflow-auto p-6">
-          <div className="mx-auto max-w-2xl space-y-6">
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Badge variant="outline">{q.type.toUpperCase()}</Badge>
-                <Badge variant="secondary">{q.subject}</Badge>
-                {q.topic && <Badge variant="secondary">{q.topic}</Badge>}
-                <span className="ml-auto text-sm text-muted-foreground">{q.points} pt{q.points > 1 ? "s" : ""}</span>
-              </div>
-              <p className="text-lg font-medium">{q.text}</p>
+
+        <div className="flex flex-1 overflow-hidden">
+          {/* Sidebar: question navigator */}
+          <aside className="hidden md:flex w-64 flex-col border-r bg-muted/30">
+            <div className="border-b p-3">
+              <p className="text-xs font-semibold uppercase text-muted-foreground">Questions</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                <CheckCircle2 className="mr-1 inline h-3 w-3 text-green-500" />
+                {answeredCount} answered · {questions.length - answeredCount} left
+              </p>
             </div>
-            {q.type === "mcq" && q.options ? (
-              <RadioGroup value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })} className="space-y-3">
-                {q.options.map((opt, i) => (
-                  <div key={i} className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
-                    <RadioGroupItem value={String.fromCharCode(65 + i)} id={`opt-${i}`} />
-                    <Label htmlFor={`opt-${i}`} className="flex-1 cursor-pointer">
-                      <span className="mr-2 font-medium text-muted-foreground">{String.fromCharCode(65 + i)}.</span>
-                      {opt}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            ) : (
-              <div className="space-y-2">
-                <Label>Your Answer</Label>
-                <Textarea value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} placeholder="Type your answer here…" rows={6} className="font-mono" />
+            <div className="flex-1 overflow-auto p-3">
+              <div className="grid grid-cols-5 gap-2">
+                {questions.map((qq, i) => {
+                  const isAnswered = (answers[qq.id] ?? "").trim().length > 0;
+                  const isCurrent = i === currentIdx;
+                  return (
+                    <button
+                      key={qq.id}
+                      onClick={() => setCurrentIdx(i)}
+                      className={`relative flex h-10 items-center justify-center rounded-md border text-xs font-medium transition-colors ${
+                        isCurrent
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : isAnswered
+                          ? "border-green-500/50 bg-green-500/10 text-foreground hover:bg-green-500/20"
+                          : "bg-background hover:bg-accent"
+                      }`}
+                      aria-label={`Question ${i + 1}${isAnswered ? " (answered)" : ""}`}
+                    >
+                      {i + 1}
+                      {isAnswered && !isCurrent && (
+                        <CheckCircle2 className="absolute -right-1 -top-1 h-3.5 w-3.5 rounded-full bg-background text-green-500" />
+                      )}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
+          </aside>
+
+          <div className="flex-1 overflow-auto p-6">
+            <div className="mx-auto max-w-2xl space-y-6">
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Badge variant="outline">Q{currentIdx + 1}</Badge>
+                  <Badge variant="outline">{q.type.toUpperCase()}</Badge>
+                  <Badge variant="secondary">{q.subject}</Badge>
+                  {q.topic && <Badge variant="secondary">{q.topic}</Badge>}
+                  <span className="ml-auto text-sm text-muted-foreground">{q.points} pt{q.points > 1 ? "s" : ""}</span>
+                </div>
+                <p className="text-lg font-medium">{q.text}</p>
+              </div>
+              {q.type === "mcq" && q.options ? (
+                <RadioGroup value={answers[q.id] ?? ""} onValueChange={(v) => setAnswers({ ...answers, [q.id]: v })} className="space-y-3">
+                  {q.options.map((opt, i) => (
+                    <div key={i} className="flex items-center space-x-3 rounded-lg border p-4 hover:bg-accent/50 transition-colors">
+                      <RadioGroupItem value={String.fromCharCode(65 + i)} id={`opt-${i}`} />
+                      <Label htmlFor={`opt-${i}`} className="flex-1 cursor-pointer">
+                        <span className="mr-2 font-medium text-muted-foreground">{String.fromCharCode(65 + i)}.</span>
+                        {opt}
+                      </Label>
+                    </div>
+                  ))}
+                </RadioGroup>
+              ) : (
+                <div className="space-y-2">
+                  <Label>Your Answer</Label>
+                  <Textarea value={answers[q.id] ?? ""} onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })} placeholder="Type your answer here…" rows={6} className="font-mono" />
+                </div>
+              )}
+            </div>
           </div>
         </div>
+
+        {/* Nav buttons — Previous + Next side-by-side on the LEFT so the webcam preview never overlaps them */}
         <div className="flex items-center justify-between border-t px-6 py-3">
-          <Button variant="outline" onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0}>
-            <ArrowLeft className="mr-2 h-4 w-4" /> Previous
-          </Button>
           <div className="flex gap-2">
-            {currentIdx < questions.length - 1 ? (
-              <Button onClick={() => setCurrentIdx(currentIdx + 1)}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
-            ) : (
-              <Button onClick={() => handleSubmit(false)} variant="default">Submit Test</Button>
-            )}
+            <Button variant="outline" onClick={() => setCurrentIdx(Math.max(0, currentIdx - 1))} disabled={currentIdx === 0}>
+              <ArrowLeft className="mr-2 h-4 w-4" /> Previous
+            </Button>
+            <Button onClick={() => setCurrentIdx(Math.min(questions.length - 1, currentIdx + 1))} disabled={currentIdx === questions.length - 1}>
+              Next <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
           </div>
+          <Button onClick={() => handleSubmit(false)} variant="default">
+            Submit Test
+          </Button>
         </div>
       </div>
     );
@@ -712,7 +804,7 @@ export default function StudentTests() {
                   <span>Questions</span><span className="text-right">{test.questions_per_student ?? qCount}</span>
                   <span>Attempts</span><span className="text-right">{attempts} / {maxAttempts}</span>
                 </div>
-                <Button className="w-full" disabled={!eligible || exhausted || isUpcoming} onClick={() => startTest(test)}>
+                <Button className="w-full" disabled={!eligible || exhausted || isUpcoming} onClick={() => handleStartClick(test)}>
                   {exhausted ? "Max Attempts Reached" : isUpcoming ? `Starts in ${Math.floor(secsUntil / 3600)}h ${Math.floor((secsUntil % 3600) / 60)}m` : !eligible ? "Profile Incomplete" : attempts > 0 ? "Retake Test" : "Start Test"}
                 </Button>
               </CardContent>
@@ -725,6 +817,68 @@ export default function StudentTests() {
           </Card>
         )}
       </div>
+
+      {/* Retake reason dialog */}
+      <Dialog open={!!retakeDialogTest} onOpenChange={(v) => { if (!v) setRetakeDialogTest(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Retake Test — {retakeDialogTest?.title}</DialogTitle>
+            <DialogDescription>
+              Please tell us why you are retaking this test. Your reason will be recorded and visible to the admin.
+              You will receive a freshly randomized set of questions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Reason for retake</Label>
+            <Textarea
+              value={retakeReason}
+              onChange={(e) => setRetakeReason(e.target.value)}
+              placeholder="e.g. Network issues during my previous attempt / I want to improve my score after more preparation…"
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">Minimum 10 characters.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRetakeDialogTest(null)}>Cancel</Button>
+            <Button onClick={confirmRetake}>Start Retake</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Camera permission denied dialog */}
+      <Dialog open={!!cameraDeniedTest} onOpenChange={(v) => { if (!v) setCameraDeniedTest(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5 text-destructive" /> Camera Access Required
+            </DialogTitle>
+            <DialogDescription>
+              This test uses live proctoring and cannot start without camera access.
+              Please allow camera permission in your browser (click the camera icon in the address bar), then retry.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border bg-muted/40 p-3 text-sm">
+            <p className="font-medium">How to enable camera:</p>
+            <ol className="mt-1 list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Click the lock / camera icon in your browser's address bar.</li>
+              <li>Set Camera to "Allow" for this site.</li>
+              <li>Click <strong>Retry</strong> below.</li>
+            </ol>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCameraDeniedTest(null)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const t = cameraDeniedTest;
+                setCameraDeniedTest(null);
+                if (t) handleStartClick(t);
+              }}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Retry Permission
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -16,6 +16,12 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Test = Tables<"tests">;
 
+interface ProctorEvent {
+  timestamp: string;
+  gadget: string;
+  action: "warning" | "auto_submit";
+}
+
 interface ReportRow {
   attemptId: string;
   studentName: string;
@@ -26,6 +32,9 @@ interface ReportRow {
   attemptNumber: number;
   completedAt: string | null;
   resumeUrl: string | null;
+  proctorEvents: ProctorEvent[];
+  autoSubmitted: boolean;
+  retakeReason: string | null;
 }
 
 export default function AdminReports() {
@@ -44,7 +53,7 @@ export default function AdminReports() {
 
     const { data: attempts } = await supabase
       .from("test_attempts")
-      .select("id, student_id, total_score, passed, attempt_number, completed_at")
+      .select("id, student_id, total_score, passed, attempt_number, completed_at, auto_submitted, proctor_events, retake_reason")
       .eq("test_id", selectedTest)
       .order("total_score", { ascending: false });
 
@@ -65,6 +74,7 @@ export default function AdminReports() {
 
     const reportRows: ReportRow[] = attempts.map((a) => {
       const p = profileMap.get(a.student_id);
+      const rec = a as unknown as { auto_submitted?: boolean; proctor_events?: ProctorEvent[]; retake_reason?: string | null };
       return {
         attemptId: a.id,
         studentName: p?.name || "Unknown",
@@ -75,6 +85,9 @@ export default function AdminReports() {
         attemptNumber: a.attempt_number,
         completedAt: a.completed_at,
         resumeUrl: p?.resume_url ?? null,
+        proctorEvents: Array.isArray(rec.proctor_events) ? rec.proctor_events : [],
+        autoSubmitted: !!rec.auto_submitted,
+        retakeReason: rec.retake_reason ?? null,
       };
     });
 
@@ -100,17 +113,25 @@ export default function AdminReports() {
   const downloadCSV = () => {
     if (rows.length === 0) { toast.error("No data to export"); return; }
     const test = tests.find((t) => t.id === selectedTest);
-    const headers = ["Name", "Email", "CGPA", "Score", "Status", "Attempt", "Completed At", "Resume URL"];
-    const csvRows = rows.map((r) => [
-      r.studentName,
-      r.email,
-      r.cgpa ?? "",
-      r.totalScore ?? "",
-      r.passed ? "Passed" : "Failed",
-      r.attemptNumber,
-      r.completedAt ? format(new Date(r.completedAt), "yyyy-MM-dd HH:mm") : "",
-      r.resumeUrl ?? "",
-    ]);
+    const headers = ["Name", "Email", "CGPA", "Score", "Status", "Attempt", "Completed At", "Auto-Submitted", "Proctor Warnings", "Gadgets Detected", "Retake Reason", "Resume URL"];
+    const csvRows = rows.map((r) => {
+      const warnings = r.proctorEvents.filter((e) => e.action === "warning").length;
+      const gadgets = [...new Set(r.proctorEvents.map((e) => e.gadget))].join("; ");
+      return [
+        r.studentName,
+        r.email,
+        r.cgpa ?? "",
+        r.totalScore ?? "",
+        r.passed ? "Passed" : "Failed",
+        r.attemptNumber,
+        r.completedAt ? format(new Date(r.completedAt), "yyyy-MM-dd HH:mm") : "",
+        r.autoSubmitted ? "Yes" : "No",
+        warnings,
+        gadgets,
+        (r.retakeReason ?? "").replace(/"/g, "'"),
+        r.resumeUrl ?? "",
+      ];
+    });
 
     const csv = [headers.join(","), ...csvRows.map((r) => r.map((v) => `"${v}"`).join(","))].join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -198,6 +219,7 @@ export default function AdminReports() {
                   <TableHead>Score</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Attempt</TableHead>
+                  <TableHead>Proctor Summary</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
@@ -213,7 +235,36 @@ export default function AdminReports() {
                         {r.passed ? "Passed" : "Failed"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{r.attemptNumber}</TableCell>
+                    <TableCell>{r.attemptNumber}{r.retakeReason && <span title={r.retakeReason} className="ml-1 text-xs text-muted-foreground">(retake)</span>}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const warnings = r.proctorEvents.filter((e) => e.action === "warning");
+                        const autoEvt = r.proctorEvents.find((e) => e.action === "auto_submit");
+                        const gadgets = [...new Set(r.proctorEvents.map((e) => e.gadget))];
+                        if (r.proctorEvents.length === 0 && !r.autoSubmitted) {
+                          return <span className="text-xs text-muted-foreground">Clean</span>;
+                        }
+                        return (
+                          <div className="text-xs space-y-1 max-w-[240px]">
+                            <div className="flex flex-wrap gap-1">
+                              {warnings.length > 0 && <Badge variant="secondary">{warnings.length} warning{warnings.length > 1 ? "s" : ""}</Badge>}
+                              {autoEvt && <Badge variant="destructive">Auto-submit</Badge>}
+                              {r.autoSubmitted && !autoEvt && <Badge variant="outline">Auto-submitted</Badge>}
+                            </div>
+                            {gadgets.length > 0 && (
+                              <p className="text-muted-foreground truncate" title={gadgets.join(", ")}>
+                                Detected: {gadgets.join(", ")}
+                              </p>
+                            )}
+                            {r.proctorEvents[0] && (
+                              <p className="text-muted-foreground">
+                                First: {format(new Date(r.proctorEvents[0].timestamp), "HH:mm:ss")}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
