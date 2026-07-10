@@ -266,6 +266,12 @@ export default function AdminTests() {
     // Convert local datetime to ISO
     const scheduledISO = localDatetimeToISO(form.scheduled_date);
 
+    const proctorConfig = {
+      warning_delay_seconds: parseInt(form.warning_delay_seconds) || 5,
+      second_offense_action: form.second_offense_action,
+      detection_interval_ms: parseInt(form.detection_interval_ms) || 1500,
+    };
+
     const payload = {
       title: form.title,
       scheduled_date: scheduledISO,
@@ -274,11 +280,13 @@ export default function AdminTests() {
       company_id: form.company_id || null,
       questions_per_student: parseInt(form.questions_per_student) || 25,
       question_bank: JSON.parse(JSON.stringify(questions)),
+      retake_question_bank: JSON.parse(JSON.stringify(retakeQuestions)),
       pass_criteria: JSON.parse(JSON.stringify(passCriteria)),
-    };
+      proctor_config: JSON.parse(JSON.stringify(proctorConfig)),
+    } as unknown as Parameters<typeof supabase.from<"tests">>[0] extends never ? never : Record<string, unknown>;
 
     if (editing) {
-      const { error } = await supabase.from("tests").update(payload).eq("id", editing.id);
+      const { error } = await (supabase.from("tests") as any).update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Test updated");
       auditLog("test_updated", "tests", editing.id, { title: form.title });
