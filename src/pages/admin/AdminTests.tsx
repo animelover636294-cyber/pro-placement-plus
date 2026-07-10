@@ -90,9 +90,13 @@ export default function AdminTests() {
     company_id: "",
     questions_per_student: "25",
     min_score_percent: "60",
+    warning_delay_seconds: "5",
+    second_offense_action: "submit" as "submit" | "warn",
+    detection_interval_ms: "1500",
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [retakeQuestions, setRetakeQuestions] = useState<Question[]>([]);
   const [qForm, setQForm] = useState<Partial<Question>>({
     type: "mcq", subject: "", topic: "", text: "", options: ["", "", "", ""], correct_answer: "", points: 1,
   });
