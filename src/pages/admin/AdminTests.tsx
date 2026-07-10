@@ -369,6 +369,7 @@ export default function AdminTests() {
               <TabsList className="w-full">
                 <TabsTrigger value="details" className="flex-1">Details</TabsTrigger>
                 <TabsTrigger value="questions" className="flex-1">Questions ({questions.length})</TabsTrigger>
+                <TabsTrigger value="retake" className="flex-1">Retake Bank ({retakeQuestions.length})</TabsTrigger>
               </TabsList>
 
               <TabsContent value="details" className="space-y-4 pt-4">
