@@ -804,7 +804,7 @@ export default function StudentTests() {
                   <span>Questions</span><span className="text-right">{test.questions_per_student ?? qCount}</span>
                   <span>Attempts</span><span className="text-right">{attempts} / {maxAttempts}</span>
                 </div>
-                <Button className="w-full" disabled={!eligible || exhausted || isUpcoming} onClick={() => startTest(test)}>
+                <Button className="w-full" disabled={!eligible || exhausted || isUpcoming} onClick={() => handleStartClick(test)}>
                   {exhausted ? "Max Attempts Reached" : isUpcoming ? `Starts in ${Math.floor(secsUntil / 3600)}h ${Math.floor((secsUntil % 3600) / 60)}m` : !eligible ? "Profile Incomplete" : attempts > 0 ? "Retake Test" : "Start Test"}
                 </Button>
               </CardContent>
@@ -817,6 +817,68 @@ export default function StudentTests() {
           </Card>
         )}
       </div>
+
+      {/* Retake reason dialog */}
+      <Dialog open={!!retakeDialogTest} onOpenChange={(v) => { if (!v) setRetakeDialogTest(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Retake Test — {retakeDialogTest?.title}</DialogTitle>
+            <DialogDescription>
+              Please tell us why you are retaking this test. Your reason will be recorded and visible to the admin.
+              You will receive a freshly randomized set of questions.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label>Reason for retake</Label>
+            <Textarea
+              value={retakeReason}
+              onChange={(e) => setRetakeReason(e.target.value)}
+              placeholder="e.g. Network issues during my previous attempt / I want to improve my score after more preparation…"
+              rows={4}
+            />
+            <p className="text-xs text-muted-foreground">Minimum 10 characters.</p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRetakeDialogTest(null)}>Cancel</Button>
+            <Button onClick={confirmRetake}>Start Retake</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Camera permission denied dialog */}
+      <Dialog open={!!cameraDeniedTest} onOpenChange={(v) => { if (!v) setCameraDeniedTest(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5 text-destructive" /> Camera Access Required
+            </DialogTitle>
+            <DialogDescription>
+              This test uses live proctoring and cannot start without camera access.
+              Please allow camera permission in your browser (click the camera icon in the address bar), then retry.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="rounded-md border bg-muted/40 p-3 text-sm">
+            <p className="font-medium">How to enable camera:</p>
+            <ol className="mt-1 list-decimal space-y-1 pl-5 text-muted-foreground">
+              <li>Click the lock / camera icon in your browser's address bar.</li>
+              <li>Set Camera to "Allow" for this site.</li>
+              <li>Click <strong>Retry</strong> below.</li>
+            </ol>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCameraDeniedTest(null)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                const t = cameraDeniedTest;
+                setCameraDeniedTest(null);
+                if (t) handleStartClick(t);
+              }}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Retry Permission
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
