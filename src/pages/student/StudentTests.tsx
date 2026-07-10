@@ -10,10 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
-import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert } from "lucide-react";
+import { Clock, AlertTriangle, CheckCircle2, XCircle, ArrowRight, ArrowLeft, Loader2, Sparkles, Eye, ShieldAlert, Camera, RefreshCw } from "lucide-react";
 import { isPast, differenceInSeconds, format } from "date-fns";
 import type { Tables } from "@/integrations/supabase/types";
-import WebcamProctor from "@/components/WebcamProctor";
+import WebcamProctor, { type ProctorEvent, type ProctorConfig } from "@/components/WebcamProctor";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 
 type Test = Tables<"tests">;
 
