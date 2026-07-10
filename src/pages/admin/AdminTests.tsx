@@ -306,7 +306,7 @@ export default function AdminTests() {
 
   const handleEdit = (t: Test) => {
     const criteria = (t.pass_criteria as Record<string, number>) ?? {};
-    // Convert the stored ISO date back to local datetime-local format
+    const proctorCfg = ((t as unknown as { proctor_config?: { warning_delay_seconds?: number; second_offense_action?: "submit" | "warn"; detection_interval_ms?: number } }).proctor_config) ?? {};
     const localDate = toLocalDatetimeString(new Date(t.scheduled_date));
     setForm({
       title: t.title,
@@ -316,8 +316,12 @@ export default function AdminTests() {
       company_id: t.company_id ?? "",
       questions_per_student: String(t.questions_per_student ?? "25"),
       min_score_percent: String(criteria.min_score_percent ?? "60"),
+      warning_delay_seconds: String(proctorCfg.warning_delay_seconds ?? 5),
+      second_offense_action: (proctorCfg.second_offense_action ?? "submit"),
+      detection_interval_ms: String(proctorCfg.detection_interval_ms ?? 1500),
     });
     setQuestions(((t.question_bank as unknown as Question[]) ?? []));
+    setRetakeQuestions((((t as unknown as { retake_question_bank?: Question[] }).retake_question_bank)) ?? []);
     setEditing(t);
     setOpen(true);
   };
