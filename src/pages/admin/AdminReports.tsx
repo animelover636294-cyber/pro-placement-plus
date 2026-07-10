@@ -227,8 +227,36 @@ export default function AdminReports() {
                         {r.passed ? "Passed" : "Failed"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{r.attemptNumber}</TableCell>
+                    <TableCell>{r.attemptNumber}{r.retakeReason && <span title={r.retakeReason} className="ml-1 text-xs text-muted-foreground">(retake)</span>}</TableCell>
                     <TableCell>
+                      {(() => {
+                        const warnings = r.proctorEvents.filter((e) => e.action === "warning");
+                        const autoEvt = r.proctorEvents.find((e) => e.action === "auto_submit");
+                        const gadgets = [...new Set(r.proctorEvents.map((e) => e.gadget))];
+                        if (r.proctorEvents.length === 0 && !r.autoSubmitted) {
+                          return <span className="text-xs text-muted-foreground">Clean</span>;
+                        }
+                        return (
+                          <div className="text-xs space-y-1 max-w-[240px]">
+                            <div className="flex flex-wrap gap-1">
+                              {warnings.length > 0 && <Badge variant="secondary">{warnings.length} warning{warnings.length > 1 ? "s" : ""}</Badge>}
+                              {autoEvt && <Badge variant="destructive">Auto-submit</Badge>}
+                              {r.autoSubmitted && !autoEvt && <Badge variant="outline">Auto-submitted</Badge>}
+                            </div>
+                            {gadgets.length > 0 && (
+                              <p className="text-muted-foreground truncate" title={gadgets.join(", ")}>
+                                Detected: {gadgets.join(", ")}
+                              </p>
+                            )}
+                            {r.proctorEvents[0] && (
+                              <p className="text-muted-foreground">
+                                First: {format(new Date(r.proctorEvents[0].timestamp), "HH:mm:ss")}
+                              </p>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </TableCell>
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
