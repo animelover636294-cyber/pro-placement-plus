@@ -208,6 +208,17 @@ export default function StudentTests() {
   const tabSwitchRef = useRef(0);
   const fullscreenExitRef = useRef(0);
 
+  // Proctor events collected during the attempt
+  const proctorEventsRef = useRef<ProctorEvent[]>([]);
+
+  // Retake reason dialog state
+  const [retakeDialogTest, setRetakeDialogTest] = useState<Test | null>(null);
+  const [retakeReason, setRetakeReason] = useState("");
+  const retakeReasonRef = useRef<string | null>(null);
+
+  // Camera permission state
+  const [cameraDeniedTest, setCameraDeniedTest] = useState<Test | null>(null);
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     const [testsRes, attemptsRes, profileRes] = await Promise.all([
