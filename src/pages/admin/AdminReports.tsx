@@ -74,6 +74,7 @@ export default function AdminReports() {
 
     const reportRows: ReportRow[] = attempts.map((a) => {
       const p = profileMap.get(a.student_id);
+      const rec = a as unknown as { auto_submitted?: boolean; proctor_events?: ProctorEvent[]; retake_reason?: string | null };
       return {
         attemptId: a.id,
         studentName: p?.name || "Unknown",
@@ -84,6 +85,9 @@ export default function AdminReports() {
         attemptNumber: a.attempt_number,
         completedAt: a.completed_at,
         resumeUrl: p?.resume_url ?? null,
+        proctorEvents: Array.isArray(rec.proctor_events) ? rec.proctor_events : [],
+        autoSubmitted: !!rec.auto_submitted,
+        retakeReason: rec.retake_reason ?? null,
       };
     });
 
