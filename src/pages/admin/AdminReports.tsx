@@ -211,6 +211,7 @@ export default function AdminReports() {
                   <TableHead>Score</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Attempt</TableHead>
+                  <TableHead>Proctor Summary</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
