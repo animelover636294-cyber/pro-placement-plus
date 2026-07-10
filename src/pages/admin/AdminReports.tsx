@@ -16,6 +16,12 @@ import type { Tables } from "@/integrations/supabase/types";
 
 type Test = Tables<"tests">;
 
+interface ProctorEvent {
+  timestamp: string;
+  gadget: string;
+  action: "warning" | "auto_submit";
+}
+
 interface ReportRow {
   attemptId: string;
   studentName: string;
@@ -26,6 +32,9 @@ interface ReportRow {
   attemptNumber: number;
   completedAt: string | null;
   resumeUrl: string | null;
+  proctorEvents: ProctorEvent[];
+  autoSubmitted: boolean;
+  retakeReason: string | null;
 }
 
 export default function AdminReports() {
