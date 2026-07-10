@@ -306,6 +306,8 @@ export type Database = {
           feedback: string | null
           id: string
           passed: boolean | null
+          proctor_events: Json | null
+          retake_reason: string | null
           scores: Json | null
           started_at: string | null
           student_id: string
@@ -322,6 +324,8 @@ export type Database = {
           feedback?: string | null
           id?: string
           passed?: boolean | null
+          proctor_events?: Json | null
+          retake_reason?: string | null
           scores?: Json | null
           started_at?: string | null
           student_id: string
@@ -338,6 +342,8 @@ export type Database = {
           feedback?: string | null
           id?: string
           passed?: boolean | null
+          proctor_events?: Json | null
+          retake_reason?: string | null
           scores?: Json | null
           started_at?: string | null
           student_id?: string
@@ -371,8 +377,10 @@ export type Database = {
           id: string
           max_participants: number | null
           pass_criteria: Json | null
+          proctor_config: Json | null
           question_bank: Json | null
           questions_per_student: number | null
+          retake_question_bank: Json | null
           scheduled_date: string
           title: string
           updated_at: string
@@ -385,8 +393,10 @@ export type Database = {
           id?: string
           max_participants?: number | null
           pass_criteria?: Json | null
+          proctor_config?: Json | null
           question_bank?: Json | null
           questions_per_student?: number | null
+          retake_question_bank?: Json | null
           scheduled_date: string
           title: string
           updated_at?: string
@@ -399,8 +409,10 @@ export type Database = {
           id?: string
           max_participants?: number | null
           pass_criteria?: Json | null
+          proctor_config?: Json | null
           question_bank?: Json | null
           questions_per_student?: number | null
+          retake_question_bank?: Json | null
           scheduled_date?: string
           title?: string
           updated_at?: string
