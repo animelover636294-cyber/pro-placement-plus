@@ -283,7 +283,7 @@ export default function AdminTests() {
       retake_question_bank: JSON.parse(JSON.stringify(retakeQuestions)),
       pass_criteria: JSON.parse(JSON.stringify(passCriteria)),
       proctor_config: JSON.parse(JSON.stringify(proctorConfig)),
-    } as unknown as Parameters<typeof supabase.from<"tests">>[0] extends never ? never : Record<string, unknown>;
+    } as Record<string, unknown>;
 
     if (editing) {
       const { error } = await (supabase.from("tests") as any).update(payload).eq("id", editing.id);
