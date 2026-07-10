@@ -574,6 +574,78 @@ export default function AdminTests() {
                   </div>
                 )}
               </TabsContent>
+
+              <TabsContent value="retake" className="space-y-4 pt-4">
+                <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                  <p className="font-medium">Retake question bank</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Students retaking this test will receive a randomized set drawn from this bank instead of the main bank.
+                    Leave empty to reuse the main bank for retakes.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => { setRetakeQuestions([...retakeQuestions, ...questions.map((q) => ({ ...q, id: crypto.randomUUID() }))]); toast.success("Copied main bank into retake bank"); }}
+                    disabled={questions.length === 0}
+                  >
+                    Copy from main bank
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      if (!aiSubject.trim()) { toast.error("Enter a subject in the Questions tab first"); return; }
+                      setAiLoading(true);
+                      try {
+                        const { data, error } = await supabase.functions.invoke("generate-questions", {
+                          body: { subject: aiSubject, topic: aiTopic, count: parseInt(aiCount) || 5, type: aiType },
+                        });
+                        if (error) throw error;
+                        const generated = (data?.questions || []) as Question[];
+                        setRetakeQuestions([...retakeQuestions, ...generated]);
+                        toast.success(`${generated.length} retake questions generated`);
+                      } catch (err) {
+                        toast.error("Failed: " + (err as Error).message);
+                      }
+                      setAiLoading(false);
+                    }}
+                    disabled={aiLoading}
+                  >
+                    {aiLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+                    Generate with AI (uses Questions-tab subject)
+                  </Button>
+                  {retakeQuestions.length > 0 && (
+                    <Button variant="ghost" size="sm" onClick={() => setRetakeQuestions([])}>
+                      Clear all
+                    </Button>
+                  )}
+                </div>
+
+                {retakeQuestions.length > 0 ? (
+                  <div className="space-y-2">
+                    {retakeQuestions.map((q, i) => (
+                      <div key={q.id} className="flex items-center justify-between rounded-lg border p-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <span className="text-xs font-medium text-muted-foreground">#{i + 1}</span>
+                          <Badge variant="secondary">{q.type.toUpperCase()}</Badge>
+                          <Badge variant="outline">{q.subject}</Badge>
+                          <span className="truncate text-sm">{q.text}</span>
+                        </div>
+                        <Button variant="ghost" size="icon" onClick={() => setRetakeQuestions(retakeQuestions.filter((x) => x.id !== q.id))}>
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground text-center py-6">
+                    No retake questions yet. Students retaking will get the main bank re-shuffled.
+                  </p>
+                )}
+              </TabsContent>
             </Tabs>
             <Button onClick={handleSave} className="mt-4 w-full">{editing ? "Update Test" : "Create Test"}</Button>
           </DialogContent>
