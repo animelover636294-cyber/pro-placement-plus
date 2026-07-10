@@ -53,7 +53,7 @@ export default function AdminReports() {
 
     const { data: attempts } = await supabase
       .from("test_attempts")
-      .select("id, student_id, total_score, passed, attempt_number, completed_at")
+      .select("id, student_id, total_score, passed, attempt_number, completed_at, auto_submitted, proctor_events, retake_reason")
       .eq("test_id", selectedTest)
       .order("total_score", { ascending: false });
 
