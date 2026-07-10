@@ -512,6 +512,8 @@ export default function StudentTests() {
       completed_at: new Date().toISOString(),
       tab_switches: tabSwitchRef.current,
       auto_submitted: autoSubmitted,
+      proctor_events: JSON.parse(JSON.stringify(proctorEventsRef.current)),
+      retake_reason: retakeReasonRef.current,
     };
     const { error } = await (supabase.from("test_attempts") as any).insert(insertPayload);
 
