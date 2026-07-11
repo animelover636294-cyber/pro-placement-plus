@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { toast } from "sonner";
-import { Download, FileText, Trash2 } from "lucide-react";
+import { Download, FileText, Trash2, ArrowUpDown, ArrowUp, ArrowDown, ShieldAlert } from "lucide-react";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
@@ -24,6 +25,8 @@ interface ProctorEvent {
 
 interface ReportRow {
   attemptId: string;
+  testId: string;
+  companyId: string | null;
   studentName: string;
   email: string;
   cgpa: number | null;
@@ -37,14 +40,35 @@ interface ReportRow {
   retakeReason: string | null;
 }
 
+type SortKey = "studentName" | "cgpa" | "totalScore" | "attemptNumber" | "completedAt";
+type SortDir = "asc" | "desc";
+
 export default function AdminReports() {
   const [tests, setTests] = useState<Test[]>([]);
+  const [companies, setCompanies] = useState<{ id: string; name: string }[]>([]);
   const [selectedTest, setSelectedTest] = useState("");
   const [rows, setRows] = useState<ReportRow[]>([]);
   const [loading, setLoading] = useState(false);
 
+  // Filters
+  const [filterCompany, setFilterCompany] = useState("all");
+  const [filterTestId, setFilterTestId] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all"); // all | passed | failed
+  const [filterAutoSubmit, setFilterAutoSubmit] = useState("all"); // all | yes | no
+  const [filterRetake, setFilterRetake] = useState("all"); // all | yes | no
+
+  // Sort
+  const [sortKey, setSortKey] = useState<SortKey>("totalScore");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
   useEffect(() => {
-    supabase.from("tests").select("*").order("scheduled_date", { ascending: false }).then(({ data }) => setTests(data ?? []));
+    Promise.all([
+      supabase.from("tests").select("*").order("scheduled_date", { ascending: false }),
+      supabase.from("companies").select("id, name").order("name"),
+    ]).then(([tRes, cRes]) => {
+      setTests(tRes.data ?? []);
+      setCompanies(cRes.data ?? []);
+    });
   }, []);
 
   const generateReport = async () => {
@@ -53,7 +77,7 @@ export default function AdminReports() {
 
     const { data: attempts } = await supabase
       .from("test_attempts")
-      .select("id, student_id, total_score, passed, attempt_number, completed_at, auto_submitted, proctor_events, retake_reason")
+      .select("id, test_id, student_id, total_score, passed, attempt_number, completed_at, auto_submitted, proctor_events, retake_reason")
       .eq("test_id", selectedTest)
       .order("total_score", { ascending: false });
 
@@ -71,12 +95,16 @@ export default function AdminReports() {
       .in("id", studentIds);
 
     const profileMap = new Map((profiles ?? []).map((p) => [p.id, p]));
+    const testMap = new Map(tests.map((t) => [t.id, t]));
 
     const reportRows: ReportRow[] = attempts.map((a) => {
       const p = profileMap.get(a.student_id);
+      const t = testMap.get(a.test_id);
       const rec = a as unknown as { auto_submitted?: boolean; proctor_events?: ProctorEvent[]; retake_reason?: string | null };
       return {
         attemptId: a.id,
+        testId: a.test_id,
+        companyId: t?.company_id ?? null,
         studentName: p?.name || "Unknown",
         email: p?.email || "—",
         cgpa: p?.cgpa ?? null,
@@ -110,11 +138,45 @@ export default function AdminReports() {
     toast.success("All records for this test were deleted");
   };
 
+  const filteredRows = useMemo(() => {
+    let out = rows.slice();
+    if (filterCompany !== "all") out = out.filter((r) => r.companyId === filterCompany);
+    if (filterTestId !== "all") out = out.filter((r) => r.testId === filterTestId);
+    if (filterStatus === "passed") out = out.filter((r) => r.passed);
+    if (filterStatus === "failed") out = out.filter((r) => !r.passed);
+    if (filterAutoSubmit === "yes") out = out.filter((r) => r.autoSubmitted);
+    if (filterAutoSubmit === "no") out = out.filter((r) => !r.autoSubmitted);
+    if (filterRetake === "yes") out = out.filter((r) => r.attemptNumber > 1);
+    if (filterRetake === "no") out = out.filter((r) => r.attemptNumber === 1);
+
+    const dir = sortDir === "asc" ? 1 : -1;
+    out.sort((a, b) => {
+      const av = a[sortKey];
+      const bv = b[sortKey];
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      if (typeof av === "number" && typeof bv === "number") return (av - bv) * dir;
+      return String(av).localeCompare(String(bv)) * dir;
+    });
+    return out;
+  }, [rows, filterCompany, filterTestId, filterStatus, filterAutoSubmit, filterRetake, sortKey, sortDir]);
+
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(sortDir === "asc" ? "desc" : "asc");
+    else { setSortKey(key); setSortDir("desc"); }
+  };
+
+  const SortIcon = ({ k }: { k: SortKey }) => {
+    if (sortKey !== k) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-40" />;
+    return sortDir === "asc" ? <ArrowUp className="ml-1 inline h-3 w-3" /> : <ArrowDown className="ml-1 inline h-3 w-3" />;
+  };
+
   const downloadCSV = () => {
-    if (rows.length === 0) { toast.error("No data to export"); return; }
+    if (filteredRows.length === 0) { toast.error("No data to export"); return; }
     const test = tests.find((t) => t.id === selectedTest);
     const headers = ["Name", "Email", "CGPA", "Score", "Status", "Attempt", "Completed At", "Auto-Submitted", "Proctor Warnings", "Gadgets Detected", "Retake Reason", "Resume URL"];
-    const csvRows = rows.map((r) => {
+    const csvRows = filteredRows.map((r) => {
       const warnings = r.proctorEvents.filter((e) => e.action === "warning").length;
       const gadgets = [...new Set(r.proctorEvents.map((e) => e.gadget))].join("; ");
       return [
@@ -143,6 +205,11 @@ export default function AdminReports() {
     URL.revokeObjectURL(url);
     toast.success("Report downloaded");
   };
+
+  const testsForFilter = useMemo(() => {
+    const testIdsInRows = new Set(rows.map((r) => r.testId));
+    return tests.filter((t) => testIdsInRows.has(t.id));
+  }, [tests, rows]);
 
   return (
     <div className="space-y-6">
@@ -180,9 +247,9 @@ export default function AdminReports() {
 
       {rows.length > 0 && (
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between gap-2">
+          <CardHeader className="flex flex-row items-center justify-between gap-2 flex-wrap">
             <CardTitle className="text-sm font-medium text-muted-foreground">
-              Results ({rows.length} students)
+              Results ({filteredRows.length} of {rows.length})
             </CardTitle>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={downloadCSV}>
@@ -209,22 +276,73 @@ export default function AdminReports() {
               </AlertDialog>
             </div>
           </CardHeader>
+
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 px-6 pb-4">
+            <Select value={filterCompany} onValueChange={setFilterCompany}>
+              <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Company" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All companies</SelectItem>
+                {companies.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterTestId} onValueChange={setFilterTestId}>
+              <SelectTrigger className="w-[160px] h-8 text-xs"><SelectValue placeholder="Test" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All tests</SelectItem>
+                {testsForFilter.map((t) => <SelectItem key={t.id} value={t.id}>{t.title}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-[130px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All results</SelectItem>
+                <SelectItem value="passed">Passed only</SelectItem>
+                <SelectItem value="failed">Failed only</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterAutoSubmit} onValueChange={setFilterAutoSubmit}>
+              <SelectTrigger className="w-[150px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Any submission</SelectItem>
+                <SelectItem value="yes">Auto-submitted</SelectItem>
+                <SelectItem value="no">Manually submitted</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select value={filterRetake} onValueChange={setFilterRetake}>
+              <SelectTrigger className="w-[140px] h-8 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All attempts</SelectItem>
+                <SelectItem value="yes">Retakes only</SelectItem>
+                <SelectItem value="no">First attempt only</SelectItem>
+              </SelectContent>
+            </Select>
+            {(filterCompany !== "all" || filterTestId !== "all" || filterStatus !== "all" || filterAutoSubmit !== "all" || filterRetake !== "all") && (
+              <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => {
+                setFilterCompany("all"); setFilterTestId("all"); setFilterStatus("all");
+                setFilterAutoSubmit("all"); setFilterRetake("all");
+              }}>Clear filters</Button>
+            )}
+          </div>
+
           <CardContent className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("studentName")}>Name<SortIcon k="studentName" /></TableHead>
                   <TableHead>Email</TableHead>
-                  <TableHead>CGPA</TableHead>
-                  <TableHead>Score</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("cgpa")}>CGPA<SortIcon k="cgpa" /></TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("totalScore")}>Score<SortIcon k="totalScore" /></TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Attempt</TableHead>
+                  <TableHead className="cursor-pointer select-none" onClick={() => toggleSort("attemptNumber")}>Attempt<SortIcon k="attemptNumber" /></TableHead>
                   <TableHead>Proctor Summary</TableHead>
                   <TableHead className="w-12"></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {rows.map((r) => (
+                {filteredRows.length === 0 ? (
+                  <TableRow><TableCell colSpan={8} className="text-center py-8 text-muted-foreground">No records match the current filters</TableCell></TableRow>
+                ) : filteredRows.map((r) => (
                   <TableRow key={r.attemptId}>
                     <TableCell className="font-medium">{r.studentName}</TableCell>
                     <TableCell>{r.email}</TableCell>
@@ -235,7 +353,10 @@ export default function AdminReports() {
                         {r.passed ? "Passed" : "Failed"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{r.attemptNumber}{r.retakeReason && <span title={r.retakeReason} className="ml-1 text-xs text-muted-foreground">(retake)</span>}</TableCell>
+                    <TableCell>
+                      {r.attemptNumber}
+                      {r.retakeReason && <span title={r.retakeReason} className="ml-1 text-xs text-muted-foreground">(retake)</span>}
+                    </TableCell>
                     <TableCell>
                       {(() => {
                         const warnings = r.proctorEvents.filter((e) => e.action === "warning");
@@ -245,23 +366,70 @@ export default function AdminReports() {
                           return <span className="text-xs text-muted-foreground">Clean</span>;
                         }
                         return (
-                          <div className="text-xs space-y-1 max-w-[240px]">
-                            <div className="flex flex-wrap gap-1">
-                              {warnings.length > 0 && <Badge variant="secondary">{warnings.length} warning{warnings.length > 1 ? "s" : ""}</Badge>}
-                              {autoEvt && <Badge variant="destructive">Auto-submit</Badge>}
-                              {r.autoSubmitted && !autoEvt && <Badge variant="outline">Auto-submitted</Badge>}
-                            </div>
-                            {gadgets.length > 0 && (
-                              <p className="text-muted-foreground truncate" title={gadgets.join(", ")}>
-                                Detected: {gadgets.join(", ")}
-                              </p>
-                            )}
-                            {r.proctorEvents[0] && (
-                              <p className="text-muted-foreground">
-                                First: {format(new Date(r.proctorEvents[0].timestamp), "HH:mm:ss")}
-                              </p>
-                            )}
-                          </div>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <button className="text-xs space-y-1 max-w-[240px] text-left hover:opacity-80">
+                                <div className="flex flex-wrap gap-1">
+                                  {warnings.length > 0 && <Badge variant="secondary">{warnings.length} warning{warnings.length > 1 ? "s" : ""}</Badge>}
+                                  {autoEvt && <Badge variant="destructive">Auto-submit</Badge>}
+                                  {r.autoSubmitted && !autoEvt && <Badge variant="outline">Auto-submitted</Badge>}
+                                </div>
+                                {gadgets.length > 0 && (
+                                  <p className="text-muted-foreground truncate" title={gadgets.join(", ")}>
+                                    Detected: {gadgets.join(", ")}
+                                  </p>
+                                )}
+                                <span className="text-[10px] text-primary underline">View timeline</span>
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-96 max-h-[400px] overflow-auto" align="end">
+                              <div className="space-y-3">
+                                <div className="flex items-center gap-2 border-b pb-2">
+                                  <ShieldAlert className="h-4 w-4 text-destructive" />
+                                  <div>
+                                    <p className="text-sm font-semibold">Proctor Event Timeline</p>
+                                    <p className="text-xs text-muted-foreground">{r.studentName} · Attempt #{r.attemptNumber}</p>
+                                  </div>
+                                </div>
+                                {r.proctorEvents.length === 0 ? (
+                                  <p className="text-xs text-muted-foreground py-2">
+                                    No proctor events. {r.autoSubmitted && "Attempt was auto-submitted (non-proctor)."}
+                                  </p>
+                                ) : (
+                                  <ol className="space-y-2">
+                                    {r.proctorEvents
+                                      .slice()
+                                      .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime())
+                                      .map((ev, i) => (
+                                        <li key={i} className="flex gap-3 text-xs">
+                                          <div className="flex flex-col items-center">
+                                            <div className={`h-2 w-2 rounded-full ${ev.action === "auto_submit" ? "bg-destructive" : "bg-yellow-500"}`} />
+                                            {i < r.proctorEvents.length - 1 && <div className="w-px flex-1 bg-border mt-1" />}
+                                          </div>
+                                          <div className="flex-1 pb-2">
+                                            <div className="flex items-center gap-2 flex-wrap">
+                                              <Badge variant={ev.action === "auto_submit" ? "destructive" : "secondary"} className="text-[10px]">
+                                                {ev.action === "auto_submit" ? "Auto-submit" : "Warning"}
+                                              </Badge>
+                                              <span className="font-medium">{ev.gadget}</span>
+                                            </div>
+                                            <p className="text-muted-foreground mt-0.5 font-mono">
+                                              {format(new Date(ev.timestamp), "yyyy-MM-dd HH:mm:ss")}
+                                            </p>
+                                          </div>
+                                        </li>
+                                      ))}
+                                  </ol>
+                                )}
+                                {r.retakeReason && (
+                                  <div className="border-t pt-2">
+                                    <p className="text-[10px] font-semibold uppercase text-muted-foreground">Retake reason</p>
+                                    <p className="text-xs mt-1">{r.retakeReason}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </PopoverContent>
+                          </Popover>
                         );
                       })()}
                     </TableCell>
