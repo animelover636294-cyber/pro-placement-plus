@@ -578,6 +578,7 @@ export default function StudentTests() {
 
     setResult({ score: scorePercent, total: totalPoints, passed, scores: scoresMap });
     setSubmitted(true);
+    if (progressKey) { try { localStorage.removeItem(progressKey); } catch { /* noop */ } }
     fetchData();
 
     // Send result notification to the student
