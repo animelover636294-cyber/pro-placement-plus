@@ -601,6 +601,7 @@ export default function StudentTests() {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
+    if (progressKey) { try { localStorage.removeItem(progressKey); } catch { /* noop */ } }
     setActiveTest(null);
     setSubmitted(false);
     setResult(null);
