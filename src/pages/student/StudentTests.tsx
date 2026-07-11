@@ -219,6 +219,9 @@ export default function StudentTests() {
   // Camera permission state
   const [cameraDeniedTest, setCameraDeniedTest] = useState<Test | null>(null);
 
+  // Persistence key for in-progress test state (survives refresh)
+  const progressKey = user ? `stp:${user.id}` : null;
+
   const fetchData = useCallback(async () => {
     if (!user) return;
     const [testsRes, attemptsRes, profileRes] = await Promise.all([
@@ -235,9 +238,59 @@ export default function StudentTests() {
       counts[a.test_id] = Math.max(counts[a.test_id] ?? 0, a.attempt_number);
     });
     setAttemptCounts(counts);
-  }, [user]);
+
+    // Auto-resume in-progress test after refresh
+    if (progressKey && !activeTest) {
+      try {
+        const raw = localStorage.getItem(progressKey);
+        if (raw) {
+          const saved = JSON.parse(raw) as {
+            testId: string; questions: Question[]; answers: Record<string, string>;
+            currentIdx: number; endsAt: number; retakeReason: string | null;
+            tabSwitches?: number; proctorEvents?: ProctorEvent[];
+          };
+          const test = (testsRes.data ?? []).find((t) => t.id === saved.testId);
+          const remaining = Math.floor((saved.endsAt - Date.now()) / 1000);
+          if (test && remaining > 0 && saved.questions?.length) {
+            setQuestions(saved.questions);
+            setAnswers(saved.answers ?? {});
+            setCurrentIdx(saved.currentIdx ?? 0);
+            setTimeLeft(remaining);
+            setSubmitted(false);
+            setResult(null);
+            tabSwitchRef.current = saved.tabSwitches ?? 0;
+            setTabSwitchCount(tabSwitchRef.current);
+            proctorEventsRef.current = saved.proctorEvents ?? [];
+            retakeReasonRef.current = saved.retakeReason ?? null;
+            setActiveTest(test);
+            submittingRef.current = false;
+            document.documentElement.requestFullscreen?.().catch(() => {});
+            toast.info("Resumed your in-progress test");
+          } else if (remaining <= 0) {
+            localStorage.removeItem(progressKey);
+          }
+        }
+      } catch { /* ignore corrupt state */ }
+    }
+  }, [user, progressKey, activeTest]);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  // Persist progress whenever answers/currentIdx/timeLeft change during an active attempt
+  useEffect(() => {
+    if (!progressKey || !activeTest || submitted) return;
+    const payload = {
+      testId: activeTest.id,
+      questions,
+      answers,
+      currentIdx,
+      endsAt: Date.now() + timeLeft * 1000,
+      retakeReason: retakeReasonRef.current,
+      tabSwitches: tabSwitchRef.current,
+      proctorEvents: proctorEventsRef.current,
+    };
+    try { localStorage.setItem(progressKey, JSON.stringify(payload)); } catch { /* quota */ }
+  }, [progressKey, activeTest, submitted, questions, answers, currentIdx, timeLeft, tabSwitchCount]);
 
   useEffect(() => {
     if (!activeTest || submitted) return;
@@ -525,6 +578,7 @@ export default function StudentTests() {
 
     setResult({ score: scorePercent, total: totalPoints, passed, scores: scoresMap });
     setSubmitted(true);
+    if (progressKey) { try { localStorage.removeItem(progressKey); } catch { /* noop */ } }
     fetchData();
 
     // Send result notification to the student
@@ -547,6 +601,7 @@ export default function StudentTests() {
     if (document.fullscreenElement) {
       document.exitFullscreen().catch(() => {});
     }
+    if (progressKey) { try { localStorage.removeItem(progressKey); } catch { /* noop */ } }
     setActiveTest(null);
     setSubmitted(false);
     setResult(null);
