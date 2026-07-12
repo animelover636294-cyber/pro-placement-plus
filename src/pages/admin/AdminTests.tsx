@@ -324,7 +324,7 @@ export default function AdminTests() {
 
   const handleEdit = (t: Test) => {
     const criteria = (t.pass_criteria as Record<string, number>) ?? {};
-    const proctorCfg = ((t as unknown as { proctor_config?: { warning_delay_seconds?: number; second_offense_action?: "submit" | "warn"; detection_interval_ms?: number } }).proctor_config) ?? {};
+    const proctorCfg = ((t as unknown as { proctor_config?: { warning_delay_seconds?: number; second_offense_action?: "submit" | "warn"; detection_interval_ms?: number; confidence_threshold?: number; consecutive_frames?: number; watched_classes?: string[] } }).proctor_config) ?? {};
     const localDate = toLocalDatetimeString(new Date(t.scheduled_date));
     setForm({
       title: t.title,
@@ -337,6 +337,9 @@ export default function AdminTests() {
       warning_delay_seconds: String(proctorCfg.warning_delay_seconds ?? 5),
       second_offense_action: (proctorCfg.second_offense_action ?? "submit"),
       detection_interval_ms: String(proctorCfg.detection_interval_ms ?? 1500),
+      confidence_threshold: String(proctorCfg.confidence_threshold ?? 0.55),
+      consecutive_frames: String(proctorCfg.consecutive_frames ?? 1),
+      watched_classes: Array.isArray(proctorCfg.watched_classes) && proctorCfg.watched_classes.length ? proctorCfg.watched_classes : [...GADGET_CLASS_OPTIONS],
     });
     setQuestions(((t.question_bank as unknown as Question[]) ?? []));
     setRetakeQuestions((((t as unknown as { retake_question_bank?: Question[] }).retake_question_bank)) ?? []);
