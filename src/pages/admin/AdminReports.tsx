@@ -71,6 +71,25 @@ export default function AdminReports() {
     });
   }, []);
 
+  const markFalsePositive = async (testId: string, gadget: string) => {
+    const test = tests.find((t) => t.id === testId);
+    if (!test) return;
+    const currentCfg = ((test as unknown as { proctor_config?: Record<string, unknown> }).proctor_config) ?? {};
+    const currentWatched = Array.isArray((currentCfg as { watched_classes?: string[] }).watched_classes)
+      ? (currentCfg as { watched_classes: string[] }).watched_classes
+      : ["cell phone", "laptop", "tv", "remote", "keyboard", "mouse", "tablet", "book"];
+    if (!currentWatched.includes(gadget)) {
+      toast.info(`"${gadget}" is already excluded for this test`);
+      return;
+    }
+    const nextWatched = currentWatched.filter((c) => c !== gadget);
+    const nextCfg = { ...currentCfg, watched_classes: nextWatched };
+    const { error } = await (supabase.from("tests") as any).update({ proctor_config: nextCfg }).eq("id", testId);
+    if (error) { toast.error(error.message); return; }
+    setTests((prev) => prev.map((t) => t.id === testId ? ({ ...t, proctor_config: nextCfg } as Test) : t));
+    toast.success(`Stopped flagging "${gadget}" in "${test.title}"`);
+  };
+
   const generateReport = async () => {
     if (!selectedTest) { toast.error("Select a test first"); return; }
     setLoading(true);
