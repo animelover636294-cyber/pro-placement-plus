@@ -450,8 +450,68 @@ export default function AdminTests() {
                           <SelectItem value="warn">Warn again</SelectItem>
                         </SelectContent>
                       </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Detection sensitivity</Label>
+                        <span className="text-xs text-muted-foreground font-mono">{parseFloat(form.confidence_threshold || "0.55").toFixed(2)}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0.3}
+                        max={0.9}
+                        step={0.05}
+                        value={form.confidence_threshold}
+                        onChange={(e) => setForm({ ...form, confidence_threshold: e.target.value })}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Lower = more detections (more false alarms). Higher = stricter matches only.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Consecutive frames</Label>
+                        <span className="text-xs text-muted-foreground font-mono">{form.consecutive_frames}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={form.consecutive_frames}
+                        onChange={(e) => setForm({ ...form, consecutive_frames: e.target.value })}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Number of frames in a row that must detect a gadget before a warning fires.</p>
                     </div>
                   </div>
+
+                  <div className="space-y-2 pt-1">
+                    <Label>Watched gadget classes</Label>
+                    <p className="text-[10px] text-muted-foreground">Unchecked items will not trigger warnings for this test.</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {GADGET_CLASS_OPTIONS.map((cls) => {
+                        const checked = form.watched_classes.includes(cls);
+                        return (
+                          <label key={cls} className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs cursor-pointer hover:bg-accent">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...form.watched_classes, cls]
+                                  : form.watched_classes.filter((c) => c !== cls);
+                                setForm({ ...form, watched_classes: next });
+                              }}
+                            />
+                            <span className="capitalize">{cls}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
                 </div>
               </TabsContent>
 
