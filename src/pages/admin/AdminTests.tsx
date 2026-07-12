@@ -82,6 +82,8 @@ export default function AdminTests() {
   const [viewingTest, setViewingTest] = useState<Test | null>(null);
   const [attempts, setAttempts] = useState<Tables<"test_attempts">[]>([]);
 
+  const GADGET_CLASS_OPTIONS = ["cell phone", "laptop", "tv", "remote", "keyboard", "mouse", "tablet", "book"];
+
   const [form, setForm] = useState({
     title: "",
     scheduled_date: "",
@@ -93,6 +95,9 @@ export default function AdminTests() {
     warning_delay_seconds: "5",
     second_offense_action: "submit" as "submit" | "warn",
     detection_interval_ms: "1500",
+    confidence_threshold: "0.55",
+    consecutive_frames: "1",
+    watched_classes: [...GADGET_CLASS_OPTIONS] as string[],
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
