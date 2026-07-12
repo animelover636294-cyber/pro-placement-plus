@@ -435,6 +435,13 @@ export default function AdminReports() {
                                             <p className="text-muted-foreground mt-0.5 font-mono">
                                               {format(new Date(ev.timestamp), "yyyy-MM-dd HH:mm:ss")}
                                             </p>
+                                            <button
+                                              type="button"
+                                              onClick={() => markFalsePositive(r.testId, ev.gadget)}
+                                              className="mt-1 text-[10px] font-medium text-primary hover:underline"
+                                            >
+                                              Mark as false positive — stop flagging "{ev.gadget}" in this test
+                                            </button>
                                           </div>
                                         </li>
                                       ))}
