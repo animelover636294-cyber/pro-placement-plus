@@ -58,6 +58,7 @@ export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }:
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
   const warnedOnceRef = useRef(false);
+  const consecutiveHitsRef = useRef(0);
   const onEventRef = useRef(onEvent);
   useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
