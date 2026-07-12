@@ -113,13 +113,19 @@ export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }:
   useEffect(() => {
     if (!active || !cameraReady) return;
 
+    const watchedSet = new Set((cfg.watched_classes && cfg.watched_classes.length ? cfg.watched_classes : DEFAULT_GADGET_CLASSES));
+    const threshold = Math.min(0.95, Math.max(0.1, cfg.confidence_threshold ?? 0.55));
+    const requiredHits = Math.max(1, Math.min(10, cfg.consecutive_frames ?? 1));
+
     const runDetection = async () => {
       if (!modelRef.current || !videoRef.current || videoRef.current.readyState < 2) return;
       if (submittedRef.current) return;
       try {
         const preds = await modelRef.current.detect(videoRef.current);
-        const gadget = preds.find((p) => p.score > 0.55 && GADGET_CLASSES.has(p.class));
+        const gadget = preds.find((p) => p.score > threshold && watchedSet.has(p.class));
         if (gadget) {
+          consecutiveHitsRef.current += 1;
+          if (consecutiveHitsRef.current < requiredHits) return;
           if (warnedOnceRef.current && !detectedGadgetRef.current) {
             if (cfg.second_offense_action === "submit" && !submittedRef.current) {
               submittedRef.current = true;
@@ -133,6 +139,7 @@ export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }:
           }
           setDetectedGadget((curr) => curr ?? gadget.class);
         } else {
+          consecutiveHitsRef.current = 0;
           setDetectedGadget(null);
         }
       } catch { /* ignore */ }
