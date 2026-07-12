@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
 
-const GADGET_CLASSES = new Set<string>([
+export const DEFAULT_GADGET_CLASSES: string[] = [
   "cell phone",
   "laptop",
   "tv",
@@ -14,7 +14,7 @@ const GADGET_CLASSES = new Set<string>([
   "mouse",
   "tablet",
   "book",
-]);
+];
 
 export interface ProctorEvent {
   timestamp: string;
@@ -26,6 +26,9 @@ export interface ProctorConfig {
   warning_delay_seconds: number;
   second_offense_action: "submit" | "warn";
   detection_interval_ms: number;
+  confidence_threshold: number;
+  consecutive_frames: number;
+  watched_classes: string[];
 }
 
 interface WebcamProctorProps {
@@ -39,6 +42,9 @@ const DEFAULT_CONFIG: ProctorConfig = {
   warning_delay_seconds: 5,
   second_offense_action: "submit",
   detection_interval_ms: 1500,
+  confidence_threshold: 0.55,
+  consecutive_frames: 1,
+  watched_classes: DEFAULT_GADGET_CLASSES,
 };
 
 export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }: WebcamProctorProps) {
