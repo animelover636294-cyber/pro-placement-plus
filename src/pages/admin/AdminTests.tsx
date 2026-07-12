@@ -82,6 +82,8 @@ export default function AdminTests() {
   const [viewingTest, setViewingTest] = useState<Test | null>(null);
   const [attempts, setAttempts] = useState<Tables<"test_attempts">[]>([]);
 
+  const GADGET_CLASS_OPTIONS = ["cell phone", "laptop", "tv", "remote", "keyboard", "mouse", "tablet", "book"];
+
   const [form, setForm] = useState({
     title: "",
     scheduled_date: "",
@@ -93,6 +95,9 @@ export default function AdminTests() {
     warning_delay_seconds: "5",
     second_offense_action: "submit" as "submit" | "warn",
     detection_interval_ms: "1500",
+    confidence_threshold: "0.55",
+    consecutive_frames: "1",
+    watched_classes: [...GADGET_CLASS_OPTIONS] as string[],
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -123,7 +128,7 @@ export default function AdminTests() {
   useEffect(() => { fetchTests(); fetchCompanies(); }, []);
 
   const resetForm = () => {
-    setForm({ title: "", scheduled_date: "", duration: "60", max_participants: "100", company_id: "", questions_per_student: "25", min_score_percent: "60", warning_delay_seconds: "5", second_offense_action: "submit", detection_interval_ms: "1500" });
+    setForm({ title: "", scheduled_date: "", duration: "60", max_participants: "100", company_id: "", questions_per_student: "25", min_score_percent: "60", warning_delay_seconds: "5", second_offense_action: "submit", detection_interval_ms: "1500", confidence_threshold: "0.55", consecutive_frames: "1", watched_classes: [...GADGET_CLASS_OPTIONS] });
     setQuestions([]);
     setRetakeQuestions([]);
     setEditing(null);
@@ -266,10 +271,15 @@ export default function AdminTests() {
     // Convert local datetime to ISO
     const scheduledISO = localDatetimeToISO(form.scheduled_date);
 
+    const parsedThreshold = parseFloat(form.confidence_threshold);
+    const parsedFrames = parseInt(form.consecutive_frames);
     const proctorConfig = {
       warning_delay_seconds: parseInt(form.warning_delay_seconds) || 5,
       second_offense_action: form.second_offense_action,
       detection_interval_ms: parseInt(form.detection_interval_ms) || 1500,
+      confidence_threshold: Number.isFinite(parsedThreshold) ? Math.min(0.95, Math.max(0.1, parsedThreshold)) : 0.55,
+      consecutive_frames: Number.isFinite(parsedFrames) ? Math.min(10, Math.max(1, parsedFrames)) : 1,
+      watched_classes: form.watched_classes,
     };
 
     const payload = {
@@ -314,7 +324,7 @@ export default function AdminTests() {
 
   const handleEdit = (t: Test) => {
     const criteria = (t.pass_criteria as Record<string, number>) ?? {};
-    const proctorCfg = ((t as unknown as { proctor_config?: { warning_delay_seconds?: number; second_offense_action?: "submit" | "warn"; detection_interval_ms?: number } }).proctor_config) ?? {};
+    const proctorCfg = ((t as unknown as { proctor_config?: { warning_delay_seconds?: number; second_offense_action?: "submit" | "warn"; detection_interval_ms?: number; confidence_threshold?: number; consecutive_frames?: number; watched_classes?: string[] } }).proctor_config) ?? {};
     const localDate = toLocalDatetimeString(new Date(t.scheduled_date));
     setForm({
       title: t.title,
@@ -327,6 +337,9 @@ export default function AdminTests() {
       warning_delay_seconds: String(proctorCfg.warning_delay_seconds ?? 5),
       second_offense_action: (proctorCfg.second_offense_action ?? "submit"),
       detection_interval_ms: String(proctorCfg.detection_interval_ms ?? 1500),
+      confidence_threshold: String(proctorCfg.confidence_threshold ?? 0.55),
+      consecutive_frames: String(proctorCfg.consecutive_frames ?? 1),
+      watched_classes: Array.isArray(proctorCfg.watched_classes) && proctorCfg.watched_classes.length ? proctorCfg.watched_classes : [...GADGET_CLASS_OPTIONS],
     });
     setQuestions(((t.question_bank as unknown as Question[]) ?? []));
     setRetakeQuestions((((t as unknown as { retake_question_bank?: Question[] }).retake_question_bank)) ?? []);
@@ -437,8 +450,68 @@ export default function AdminTests() {
                           <SelectItem value="warn">Warn again</SelectItem>
                         </SelectContent>
                       </Select>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 pt-1">
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Detection sensitivity</Label>
+                        <span className="text-xs text-muted-foreground font-mono">{parseFloat(form.confidence_threshold || "0.55").toFixed(2)}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0.3}
+                        max={0.9}
+                        step={0.05}
+                        value={form.confidence_threshold}
+                        onChange={(e) => setForm({ ...form, confidence_threshold: e.target.value })}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Lower = more detections (more false alarms). Higher = stricter matches only.</p>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label>Consecutive frames</Label>
+                        <span className="text-xs text-muted-foreground font-mono">{form.consecutive_frames}</span>
+                      </div>
+                      <input
+                        type="range"
+                        min={1}
+                        max={5}
+                        step={1}
+                        value={form.consecutive_frames}
+                        onChange={(e) => setForm({ ...form, consecutive_frames: e.target.value })}
+                        className="w-full accent-primary"
+                      />
+                      <p className="text-[10px] text-muted-foreground">Number of frames in a row that must detect a gadget before a warning fires.</p>
                     </div>
                   </div>
+
+                  <div className="space-y-2 pt-1">
+                    <Label>Watched gadget classes</Label>
+                    <p className="text-[10px] text-muted-foreground">Unchecked items will not trigger warnings for this test.</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {GADGET_CLASS_OPTIONS.map((cls) => {
+                        const checked = form.watched_classes.includes(cls);
+                        return (
+                          <label key={cls} className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs cursor-pointer hover:bg-accent">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...form.watched_classes, cls]
+                                  : form.watched_classes.filter((c) => c !== cls);
+                                setForm({ ...form, watched_classes: next });
+                              }}
+                            />
+                            <span className="capitalize">{cls}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
                 </div>
               </TabsContent>
 

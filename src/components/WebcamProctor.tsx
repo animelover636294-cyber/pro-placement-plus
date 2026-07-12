@@ -5,7 +5,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ShieldAlert, Video, VideoOff } from "lucide-react";
 import { toast } from "sonner";
 
-const GADGET_CLASSES = new Set<string>([
+export const DEFAULT_GADGET_CLASSES: string[] = [
   "cell phone",
   "laptop",
   "tv",
@@ -14,7 +14,7 @@ const GADGET_CLASSES = new Set<string>([
   "mouse",
   "tablet",
   "book",
-]);
+];
 
 export interface ProctorEvent {
   timestamp: string;
@@ -26,6 +26,9 @@ export interface ProctorConfig {
   warning_delay_seconds: number;
   second_offense_action: "submit" | "warn";
   detection_interval_ms: number;
+  confidence_threshold: number;
+  consecutive_frames: number;
+  watched_classes: string[];
 }
 
 interface WebcamProctorProps {
@@ -39,6 +42,9 @@ const DEFAULT_CONFIG: ProctorConfig = {
   warning_delay_seconds: 5,
   second_offense_action: "submit",
   detection_interval_ms: 1500,
+  confidence_threshold: 0.55,
+  consecutive_frames: 1,
+  watched_classes: DEFAULT_GADGET_CLASSES,
 };
 
 export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }: WebcamProctorProps) {
@@ -52,6 +58,7 @@ export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }:
   const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const submittedRef = useRef(false);
   const warnedOnceRef = useRef(false);
+  const consecutiveHitsRef = useRef(0);
   const onEventRef = useRef(onEvent);
   useEffect(() => { onEventRef.current = onEvent; }, [onEvent]);
 
@@ -106,13 +113,19 @@ export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }:
   useEffect(() => {
     if (!active || !cameraReady) return;
 
+    const watchedSet = new Set((cfg.watched_classes && cfg.watched_classes.length ? cfg.watched_classes : DEFAULT_GADGET_CLASSES));
+    const threshold = Math.min(0.95, Math.max(0.1, cfg.confidence_threshold ?? 0.55));
+    const requiredHits = Math.max(1, Math.min(10, cfg.consecutive_frames ?? 1));
+
     const runDetection = async () => {
       if (!modelRef.current || !videoRef.current || videoRef.current.readyState < 2) return;
       if (submittedRef.current) return;
       try {
         const preds = await modelRef.current.detect(videoRef.current);
-        const gadget = preds.find((p) => p.score > 0.55 && GADGET_CLASSES.has(p.class));
+        const gadget = preds.find((p) => p.score > threshold && watchedSet.has(p.class));
         if (gadget) {
+          consecutiveHitsRef.current += 1;
+          if (consecutiveHitsRef.current < requiredHits) return;
           if (warnedOnceRef.current && !detectedGadgetRef.current) {
             if (cfg.second_offense_action === "submit" && !submittedRef.current) {
               submittedRef.current = true;
@@ -126,6 +139,7 @@ export default function WebcamProctor({ active, onAutoSubmit, onEvent, config }:
           }
           setDetectedGadget((curr) => curr ?? gadget.class);
         } else {
+          consecutiveHitsRef.current = 0;
           setDetectedGadget(null);
         }
       } catch { /* ignore */ }
