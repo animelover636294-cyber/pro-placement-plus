@@ -271,10 +271,15 @@ export default function AdminTests() {
     // Convert local datetime to ISO
     const scheduledISO = localDatetimeToISO(form.scheduled_date);
 
+    const parsedThreshold = parseFloat(form.confidence_threshold);
+    const parsedFrames = parseInt(form.consecutive_frames);
     const proctorConfig = {
       warning_delay_seconds: parseInt(form.warning_delay_seconds) || 5,
       second_offense_action: form.second_offense_action,
       detection_interval_ms: parseInt(form.detection_interval_ms) || 1500,
+      confidence_threshold: Number.isFinite(parsedThreshold) ? Math.min(0.95, Math.max(0.1, parsedThreshold)) : 0.55,
+      consecutive_frames: Number.isFinite(parsedFrames) ? Math.min(10, Math.max(1, parsedFrames)) : 1,
+      watched_classes: form.watched_classes,
     };
 
     const payload = {
