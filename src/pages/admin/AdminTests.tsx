@@ -128,7 +128,7 @@ export default function AdminTests() {
   useEffect(() => { fetchTests(); fetchCompanies(); }, []);
 
   const resetForm = () => {
-    setForm({ title: "", scheduled_date: "", duration: "60", max_participants: "100", company_id: "", questions_per_student: "25", min_score_percent: "60", warning_delay_seconds: "5", second_offense_action: "submit", detection_interval_ms: "1500" });
+    setForm({ title: "", scheduled_date: "", duration: "60", max_participants: "100", company_id: "", questions_per_student: "25", min_score_percent: "60", warning_delay_seconds: "5", second_offense_action: "submit", detection_interval_ms: "1500", confidence_threshold: "0.55", consecutive_frames: "1", watched_classes: [...GADGET_CLASS_OPTIONS] });
     setQuestions([]);
     setRetakeQuestions([]);
     setEditing(null);
