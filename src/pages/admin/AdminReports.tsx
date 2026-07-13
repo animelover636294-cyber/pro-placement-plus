@@ -410,6 +410,41 @@ export default function AdminReports() {
                                     <p className="text-xs text-muted-foreground">{r.studentName} · Attempt #{r.attemptNumber}</p>
                                   </div>
                                 </div>
+                                {(() => {
+                                  const t = tests.find((x) => x.id === r.testId) as (Test & { proctor_config?: Record<string, unknown> }) | undefined;
+                                  const cfg = (t?.proctor_config ?? {}) as Record<string, unknown>;
+                                  const DEFAULT_CLASSES = ["cell phone","laptop","tv","remote","keyboard","mouse","tablet","book"];
+                                  const watched = Array.isArray(cfg.watched_classes) ? (cfg.watched_classes as string[]) : DEFAULT_CLASSES;
+                                  const excluded = DEFAULT_CLASSES.filter((c) => !watched.includes(c));
+                                  const threshold = typeof cfg.confidence_threshold === "number" ? cfg.confidence_threshold : 0.55;
+                                  const frames = typeof cfg.consecutive_frames === "number" ? cfg.consecutive_frames : 1;
+                                  const warnDelay = typeof cfg.warning_delay_seconds === "number" ? cfg.warning_delay_seconds : 5;
+                                  const interval = typeof cfg.detection_interval_ms === "number" ? cfg.detection_interval_ms : 1500;
+                                  const secondOffense = typeof cfg.second_offense_action === "string" ? cfg.second_offense_action : "submit";
+                                  return (
+                                    <div className="rounded-md border bg-muted/30 p-2 space-y-1.5">
+                                      <p className="text-[10px] font-semibold uppercase text-muted-foreground">Effective proctor config for this attempt</p>
+                                      <div className="grid grid-cols-2 gap-x-3 gap-y-1 text-[11px]">
+                                        <div><span className="text-muted-foreground">Confidence:</span> <span className="font-mono font-medium">{Number(threshold).toFixed(2)}</span></div>
+                                        <div><span className="text-muted-foreground">Consecutive frames:</span> <span className="font-mono font-medium">{frames}</span></div>
+                                        <div><span className="text-muted-foreground">Warning grace:</span> <span className="font-mono font-medium">{warnDelay}s</span></div>
+                                        <div><span className="text-muted-foreground">Scan interval:</span> <span className="font-mono font-medium">{interval}ms</span></div>
+                                        <div className="col-span-2"><span className="text-muted-foreground">2nd offense:</span> <span className="font-mono font-medium">{secondOffense === "submit" ? "Auto-submit" : "Warn again"}</span></div>
+                                      </div>
+                                      <div>
+                                        <p className="text-[10px] text-muted-foreground mb-1">Allowlist ({watched.length}/{DEFAULT_CLASSES.length})</p>
+                                        <div className="flex flex-wrap gap-1">
+                                          {watched.map((c) => (
+                                            <Badge key={c} variant="outline" className="text-[9px] px-1.5 py-0">{c}</Badge>
+                                          ))}
+                                          {excluded.map((c) => (
+                                            <Badge key={c} variant="secondary" className="text-[9px] px-1.5 py-0 line-through opacity-60">{c}</Badge>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })()}
                                 {r.proctorEvents.length === 0 ? (
                                   <p className="text-xs text-muted-foreground py-2">
                                     No proctor events. {r.autoSubmitted && "Attempt was auto-submitted (non-proctor)."}
