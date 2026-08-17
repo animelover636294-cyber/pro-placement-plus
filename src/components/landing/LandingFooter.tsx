@@ -1,17 +1,21 @@
-import { GraduationCap } from "lucide-react";
-
 export function LandingFooter() {
   return (
-    <footer className="relative z-10 border-t border-border px-6 py-8 lg:px-12">
-      <div className="mx-auto flex max-w-6xl items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-            <GraduationCap className="h-4 w-4" />
-          </div>
-          <span className="font-display text-sm font-bold text-foreground">SmartPlace</span>
-        </div>
-        <p className="text-xs text-muted-foreground">© 2026 SmartPlace. All rights reserved.</p>
+    <footer className="relative z-10 mt-24 flex w-full flex-col items-center justify-between gap-4 border-t border-border/20 bg-card/40 px-5 py-12 backdrop-blur-md md:flex-row md:px-16">
+      <div className="font-display text-xl font-bold text-muted-foreground">Pro Placement Plus</div>
+      <div className="text-center text-sm text-muted-foreground md:text-left">
+        © {new Date().getFullYear()} Pro Placement Plus. Precision in Placement.
       </div>
+      <nav className="flex gap-6">
+        <a className="label-caps text-muted-foreground transition-colors hover:text-accent-foreground" href="#features">
+          Privacy
+        </a>
+        <a className="label-caps text-muted-foreground transition-colors hover:text-accent-foreground" href="#features">
+          Terms
+        </a>
+        <a className="label-caps text-muted-foreground transition-colors hover:text-accent-foreground" href="#cta">
+          Contact
+        </a>
+      </nav>
     </footer>
   );
 }
