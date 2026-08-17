@@ -45,19 +45,21 @@ const studentLinks = [
 function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const links = isAdmin ? adminLinks : studentLinks;
   return (
-    <Sidebar className="border-r border-border bg-sidebar">
-      <SidebarContent>
+    <Sidebar className="border-r border-border/40 bg-sidebar/60 backdrop-blur-xl">
+      <SidebarContent className="bg-transparent">
         <div className="flex items-center gap-3 px-5 py-6">
-          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <GraduationCap className="h-4 w-4" />
+          <div className="skeuo-icon h-11 w-11 bg-primary text-primary-foreground">
+            <GraduationCap className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold tracking-tight text-foreground">SmartPlace</span>
+          <span className="font-display text-lg font-bold tracking-tight text-foreground">
+            Pro Placement Plus
+          </span>
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="px-5 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
+          <SidebarGroupLabel className="label-caps px-5 text-muted-foreground">
             {isAdmin ? "Admin" : "Student"}
           </SidebarGroupLabel>
-          <SidebarGroupContent className="px-3 mt-2">
+          <SidebarGroupContent className="mt-2 px-3">
             <SidebarMenu>
               {links.map((item) => (
                 <SidebarMenuItem key={item.title}>
@@ -65,8 +67,8 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin" || item.url === "/dashboard"}
-                      className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-200 hover:bg-accent hover:text-accent-foreground"
-                      activeClassName="bg-primary text-primary-foreground shadow-lg font-semibold"
+                      className="flex items-center gap-3 rounded-xl border-l-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-300 hover:bg-secondary/40 hover:text-accent-foreground"
+                      activeClassName="border-primary bg-primary/10 text-accent-foreground font-semibold"
                     >
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
