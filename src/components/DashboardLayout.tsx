@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
+import { AnimatedBackground } from "@/components/3d/AnimatedBackground";
 
 const adminLinks = [
   { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
