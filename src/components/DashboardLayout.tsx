@@ -131,21 +131,22 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="relative flex min-h-screen w-full bg-background">
+        <AnimatedBackground />
         <AppSidebar isAdmin={isAdmin} />
-        <div className="flex flex-1 flex-col">
-          <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+        <div className="relative z-10 flex flex-1 flex-col">
+          <header className="flex h-16 items-center justify-between border-b border-border/40 bg-card/40 px-6 backdrop-blur-md">
             <SidebarTrigger><Menu className="h-5 w-5 text-muted-foreground" /></SidebarTrigger>
             <div className="flex items-center gap-4">
               <span className="hidden text-sm font-medium text-muted-foreground sm:block">{user?.email}</span>
               <NotificationCenter />
               <ThemeToggle />
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-foreground" onClick={handleSignOut}>
+              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-accent-foreground" onClick={handleSignOut}>
                 <LogOut className="mr-1.5 h-4 w-4" /> Sign out
               </Button>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-6">{children}</main>
+          <main className="flex-1 overflow-auto p-6 md:p-8">{children}</main>
         </div>
       </div>
 
