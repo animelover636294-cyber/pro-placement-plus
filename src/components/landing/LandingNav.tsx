@@ -1,43 +1,54 @@
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { GraduationCap } from "lucide-react";
-import { motion } from "framer-motion";
-import { ThemeToggle } from "@/components/ThemeToggle";
+import { Bell } from "lucide-react";
+
+const links = [
+  { label: "Solutions", href: "#features" },
+  { label: "Recruiters", href: "#features" },
+  { label: "Success Stories", href: "#cta" },
+  { label: "Pricing", href: "#cta" },
+];
 
 export function LandingNav() {
   const navigate = useNavigate();
 
   return (
-    <motion.header
-      className="relative z-20 flex items-center justify-between px-6 py-5 lg:px-12"
-      initial={{ opacity: 0, y: -20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5 }}
-    >
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary border border-border">
-          <GraduationCap className="h-5 w-5 text-foreground" />
-        </div>
-        <span className="font-display text-xl font-bold tracking-tight text-foreground">SmartPlace</span>
+    <header className="fixed top-0 z-50 flex h-20 w-full items-center justify-between border-b border-border/40 bg-card/40 px-5 backdrop-blur-md md:px-16">
+      <div className="font-display text-2xl font-bold tracking-tighter text-foreground md:text-[32px]">
+        Pro Placement Plus
       </div>
-      <nav className="hidden items-center gap-8 md:flex">
-        {["Platform", "Features", "About"].map((item) => (
-          <button key={item} className="text-sm font-medium text-muted-foreground transition hover:text-foreground">
-            {item}
-          </button>
+
+      <nav className="hidden items-center gap-6 md:flex">
+        {links.map((l) => (
+          <a
+            key={l.label}
+            href={l.href}
+            className="label-caps text-muted-foreground transition-colors hover:text-accent-foreground"
+          >
+            {l.label}
+          </a>
         ))}
       </nav>
-      <div className="flex items-center gap-3">
-        <ThemeToggle />
-        <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
-          <Button
-            className="font-semibold"
-            onClick={() => navigate("/signup")}
-          >
-            Join Now
-          </Button>
-        </motion.div>
+
+      <div className="flex items-center gap-4">
+        <button
+          aria-label="Notifications"
+          className="glass-panel glass-panel-interactive hidden h-10 w-10 items-center justify-center rounded-full text-muted-foreground transition-all hover:text-accent-foreground md:flex"
+        >
+          <Bell className="h-4 w-4" />
+        </button>
+        <button
+          className="label-caps hidden text-muted-foreground transition-colors hover:text-accent-foreground md:block"
+          onClick={() => navigate("/login")}
+        >
+          Log In
+        </button>
+        <button
+          className="label-caps spring-transition rounded-lg bg-primary px-6 py-3 text-primary-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.2)] hover:scale-[0.97]"
+          onClick={() => navigate("/signup")}
+        >
+          Get Started
+        </button>
       </div>
-    </motion.header>
+    </header>
   );
 }
