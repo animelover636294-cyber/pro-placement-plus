@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Video } from "lucide-react";
+import { Video, ArrowRight } from "lucide-react";
 
 export function LandingHero() {
   const navigate = useNavigate();
