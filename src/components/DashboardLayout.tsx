@@ -46,32 +46,35 @@ const studentLinks = [
 function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
   const links = isAdmin ? adminLinks : studentLinks;
   return (
-    <Sidebar className="border-r border-border/40 bg-sidebar/60 backdrop-blur-xl">
+    <Sidebar className="border-r border-border/40 bg-sidebar/50 backdrop-blur-3xl">
       <SidebarContent className="bg-transparent">
         <div className="flex items-center gap-3 px-5 py-6">
           <div className="skeuo-icon h-11 w-11 bg-primary text-primary-foreground">
             <GraduationCap className="h-5 w-5" />
           </div>
-          <span className="font-display text-lg font-bold tracking-tight text-foreground">
-            Pro Placement Plus
-          </span>
+          <div className="leading-tight">
+            <div className="font-display text-[17px] font-bold tracking-tight text-foreground">
+              Pro Placement Plus
+            </div>
+            <span className="text-xs text-muted-foreground">Elite Edition</span>
+          </div>
         </div>
         <SidebarGroup>
-          <SidebarGroupLabel className="label-caps px-5 text-muted-foreground">
+          <SidebarGroupLabel className="label-caps px-5 tracking-[0.15em] text-accent-foreground">
             {isAdmin ? "Admin" : "Student"}
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-2 px-3">
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {links.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
                       end={item.url === "/admin" || item.url === "/dashboard"}
-                      className="flex items-center gap-3 rounded-xl border-l-2 border-transparent px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-300 hover:bg-secondary/40 hover:text-accent-foreground"
-                      activeClassName="border-primary bg-primary/10 text-accent-foreground font-semibold"
+                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-300 hover:bg-white/5 hover:text-foreground"
+                      activeClassName="nav-pill-active font-semibold hover:bg-primary hover:text-primary-foreground"
                     >
-                      <item.icon className="h-4 w-4" />
+                      <item.icon className="h-4 w-4 drop-shadow-[0_2px_4px_rgba(0,0,0,0.4)]" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
