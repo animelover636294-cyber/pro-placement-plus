@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Video } from "lucide-react";
+import { Video, ArrowRight } from "lucide-react";
 
 export function LandingHero() {
   const navigate = useNavigate();
@@ -13,27 +13,30 @@ export function LandingHero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.7 }}
       >
-        <h1 className="font-display text-[40px] font-bold leading-[1.1] tracking-[-0.02em] text-foreground sm:text-5xl">
-          Placements, run
+        <p className="label-caps tracking-[0.18em] text-accent-foreground">Elite Campus Recruitment</p>
+        <h1 className="font-display text-[40px] font-bold leading-[1.05] tracking-[-0.02em] text-foreground sm:text-5xl lg:text-[64px]">
+          Placements,
           <br />
-          <span className="text-primary">like a product</span>
+          <span className="text-glow bg-gradient-to-r from-[hsl(248_100%_87%)] to-primary bg-clip-text text-transparent">
+            run like a product
+          </span>
         </h1>
         <p className="max-w-xl text-lg leading-relaxed text-muted-foreground">
-          The full-stack platform for elite campus recruitment. Manage automated eligibility, secure
-          proctored assessments, and seamless placement workflows—all from one unified, intelligent hub.
+          Engineered for high-tier professionals. Automate eligibility, run tamper-proof proctored
+          assessments, and place with precision instrumentation—from one unified, intelligent hub.
         </p>
         <div className="mt-4 flex flex-col gap-4 sm:flex-row">
           <button
-            className="label-caps spring-transition rounded-lg bg-primary px-8 py-4 text-primary-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_10px_20px_hsl(var(--primary)/0.3)] hover:scale-[0.97]"
+            className="label-caps spring-transition rounded-lg bg-primary px-8 py-4 text-primary-foreground shadow-[inset_0_1px_1px_rgba(255,255,255,0.2),0_0_24px_hsl(var(--primary)/0.45)] hover:scale-105 active:scale-95"
             onClick={() => navigate("/signup")}
           >
             Get Started
           </button>
           <a
             href="#features"
-            className="label-caps glass-panel spring-transition rounded-lg px-8 py-4 text-center text-foreground hover:border-border"
+            className="label-caps glass-button spring-transition flex items-center justify-center gap-2 rounded-lg px-8 py-4 text-center text-foreground"
           >
-            See how it works
+            View Demo <ArrowRight className="h-4 w-4 text-accent-foreground" />
           </a>
         </div>
       </motion.div>
