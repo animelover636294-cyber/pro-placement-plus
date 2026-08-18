@@ -139,13 +139,13 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
         <AnimatedBackground />
         <AppSidebar isAdmin={isAdmin} />
         <div className="relative z-10 flex flex-1 flex-col">
-          <header className="flex h-16 items-center justify-between border-b border-border/40 bg-card/40 px-6 backdrop-blur-md">
+          <header className="flex h-16 items-center justify-between border-b border-border/40 bg-white/5 px-6 shadow-[0_1px_0_0_hsl(0_0%_100%/0.06)_inset] backdrop-blur-3xl">
             <SidebarTrigger><Menu className="h-5 w-5 text-muted-foreground" /></SidebarTrigger>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <span className="hidden text-sm font-medium text-muted-foreground sm:block">{user?.email}</span>
               <NotificationCenter />
               <ThemeToggle />
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-accent-foreground" onClick={handleSignOut}>
+              <Button variant="ghost" size="sm" className="glass-button rounded-lg text-muted-foreground hover:text-accent-foreground" onClick={handleSignOut}>
                 <LogOut className="mr-1.5 h-4 w-4" /> Sign out
               </Button>
             </div>
