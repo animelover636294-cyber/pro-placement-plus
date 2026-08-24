@@ -26,8 +26,8 @@ export function LandingFeatures() {
         </article>
 
         <article className="glass-panel glass-panel-interactive spring-transition group flex flex-col gap-4 rounded-xl bg-gradient-to-br from-card/10 to-primary/10 p-6 lg:col-span-2">
-          <div className="extrude-icon spring-transition flex h-12 w-12 items-center justify-center rounded-full bg-secondary/60 group-hover:bg-destructive/20">
-            <ShieldCheck className="h-5 w-5 text-destructive" />
+          <div className="extrude-icon spring-transition flex h-12 w-12 items-center justify-center rounded-full bg-secondary/60 group-hover:bg-primary/20">
+            <ShieldCheck className="h-5 w-5 text-accent-foreground" />
           </div>
           <div className="mt-auto">
             <h3 className="mb-2 font-display text-xl font-bold text-foreground">
@@ -40,8 +40,8 @@ export function LandingFeatures() {
         </article>
 
         <article className="glass-panel glass-panel-interactive spring-transition group flex flex-col gap-4 rounded-xl p-6">
-          <div className="extrude-icon spring-transition flex h-12 w-12 items-center justify-center rounded-full bg-secondary/60 group-hover:bg-tertiary/20">
-            <BrainCircuit className="h-5 w-5 text-tertiary" />
+          <div className="extrude-icon spring-transition flex h-12 w-12 items-center justify-center rounded-full bg-secondary/60 group-hover:bg-primary/20">
+            <BrainCircuit className="h-5 w-5 text-accent-foreground" />
           </div>
           <div>
             <h3 className="mb-2 font-display text-xl font-bold text-foreground">AI Question Generation</h3>

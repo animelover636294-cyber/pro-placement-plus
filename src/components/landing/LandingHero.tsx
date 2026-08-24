@@ -1,6 +1,14 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Video, ArrowRight } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
+import hero1280 from "@/assets/hero-dashboard-1280.jpg";
+import hero960 from "@/assets/hero-dashboard-960.jpg";
+import hero640 from "@/assets/hero-dashboard-640.jpg";
+
+const HERO_BLUR =
+  "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDABQODxIPDRQSEBIXFRQYHjIhHhwcHj0sLiQySUBMS0dARkVQWnNiUFVtVkVGZIhlbXd7gYKBTmCNl4x9lnN+gXz/2wBDARUXFx4aHjshITt8U0ZTfHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHx8fHz/wAARCAAQABQDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwDlBsxwo6ClVVBGV479qIihADYHy9mpAykjLAfjVgRz4MmVGAR0op5aMkkt+lFKwH//2Q==";
+
 
 export function LandingHero() {
   const navigate = useNavigate();
@@ -43,18 +51,20 @@ export function LandingHero() {
 
       <div className="perspective-container relative hidden h-[500px] w-full lg:block">
         <div className="hero-bento absolute inset-0 h-full w-full">
-          <div className="glass-panel absolute left-[10%] top-[10%] flex h-[70%] w-[80%] flex-col gap-4 rounded-xl p-4 shadow-2xl">
-            <div className="mb-2 flex gap-2">
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-            </div>
-            <div className="h-12 w-3/4 rounded-md bg-secondary/60" />
-            <div className="grid flex-1 grid-cols-3 gap-4">
-              <div className="h-full rounded-md bg-secondary/40" />
-              <div className="col-span-2 h-full rounded-md bg-secondary/40" />
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <OptimizedImage
+              src={hero1280}
+              srcSetMap={{ 640: hero640, 960: hero960, 1280: hero1280 }}
+              sizes="(max-width: 1024px) 0px, (max-width: 1440px) 45vw, 640px"
+              blurDataURL={HERO_BLUR}
+              width={1280}
+              height={1024}
+              priority
+              alt="Pro Placement Plus dashboard showing placement analytics and a live proctoring session"
+              className="drop-shadow-[0_30px_60px_hsl(var(--primary)/0.25)]"
+            />
           </div>
+
 
           <div className="glass-panel absolute bottom-[5%] right-[5%] flex items-center gap-3 rounded-xl border-primary/30 bg-card/80 p-4 shadow-[0_0_30px_hsl(var(--primary)/0.25)] backdrop-blur-3xl">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-destructive/20">
