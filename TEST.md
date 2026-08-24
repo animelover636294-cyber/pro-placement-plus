@@ -1,4 +1,4 @@
-# Pro Placement Plus — Test Documentation
+# Intelligent Placement Management System — Test Documentation
 
 ## Running Tests
 

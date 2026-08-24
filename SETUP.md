@@ -1,6 +1,6 @@
 # Local Development Setup Guide
 
-This guide walks you through running **Pro Placement Plus** locally in VS Code with full functionality.
+This guide walks you through running **Intelligent Placement Management System** locally in VS Code with full functionality.
 
 ## Prerequisites
 

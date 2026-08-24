@@ -1,4 +1,4 @@
-# Pro Placement Plus — Complete Project Information
+# Intelligent Placement Management System — Complete Project Information
 
 A single reference document covering the project idea, the full folder/file structure, the database design, every feature implemented, and how each feature works.
 
@@ -16,7 +16,7 @@ Campus placement preparation in most institutions is fragmented and manual:
 - Placement officers have no dashboard, analytics or exportable reports.
 
 ### 1.2 Solution
-**Pro Placement Plus** is a full-stack, role-based placement management platform that unifies the entire cycle:
+**Intelligent Placement Management System** is a full-stack, role-based placement management platform that unifies the entire cycle:
 
 `Student onboarding → Profile & document verification → Eligibility matching → Proctored online assessment → AI feedback → Analytics & reporting`
 
