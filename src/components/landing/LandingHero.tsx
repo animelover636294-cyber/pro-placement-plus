@@ -60,7 +60,7 @@ export function LandingHero() {
               width={1280}
               height={1024}
               priority
-              alt="Pro Placement Plus dashboard showing placement analytics and a live proctoring session"
+              alt="Intelligent Placement Management System dashboard showing placement analytics and a live proctoring session"
               className="drop-shadow-[0_30px_60px_hsl(var(--primary)/0.25)]"
             />
           </div>

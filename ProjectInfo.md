@@ -1,4 +1,4 @@
-# Pro Placement Plus — Detailed Project Information
+# Intelligent Placement Management System — Detailed Project Information
 
 ## 1. Problem Statement
 
@@ -31,7 +31,7 @@ The net effect is that a process which should be transparent, fair, and data-dri
 
 ## 2. Solution We Provide
 
-**Pro Placement Plus** is a full-stack, single-tenant web platform that replaces the entire manual pipeline with one coherent, role-based system. It is designed around three principles:
+**Intelligent Placement Management System** is a full-stack, single-tenant web platform that replaces the entire manual pipeline with one coherent, role-based system. It is designed around three principles:
 
 - **One source of truth** — every piece of data (student, company, test, attempt, result, notification, audit event) lives in one database with row-level security.
 - **Automation where it counts** — eligibility, notifications, proctoring, question generation, marks-card verification, and reporting are all automated, so humans only handle exceptions.
@@ -48,7 +48,7 @@ Both portals share the same design system, authentication layer, and real-time b
 
 ## 3. How the Solution Works — Step by Step
 
-This section walks through the full lifecycle of a placement drive on Pro Placement Plus, from onboarding to offer tracking, and explains what happens at each step.
+This section walks through the full lifecycle of a placement drive on Intelligent Placement Management System, from onboarding to offer tracking, and explains what happens at each step.
 
 ### Step 1 — Admin Onboarding and Secure Access
 
@@ -325,4 +325,4 @@ All tables have **RLS enabled**, per-role **GRANTs** in the same migration, and 
 
 ## 7. Summary
 
-Pro Placement Plus takes a process that most institutions still run on spreadsheets and inbox threads and turns it into a single auditable platform. Students get transparency and personalised feedback. Admins get automation, tunable proctoring, and forensic-grade reports where every automated decision — including which proctor configuration governed each attempt — is visible and reversible. The stack (React 18, TypeScript, Tailwind, shadcn/ui, Supabase, Lovable AI, TensorFlow.js, Recharts, Framer Motion, Vitest, Vercel) is chosen so that the platform is fast to iterate on, safe by default, and honest about how its automated decisions are made.
+Intelligent Placement Management System takes a process that most institutions still run on spreadsheets and inbox threads and turns it into a single auditable platform. Students get transparency and personalised feedback. Admins get automation, tunable proctoring, and forensic-grade reports where every automated decision — including which proctor configuration governed each attempt — is visible and reversible. The stack (React 18, TypeScript, Tailwind, shadcn/ui, Supabase, Lovable AI, TensorFlow.js, Recharts, Framer Motion, Vitest, Vercel) is chosen so that the platform is fast to iterate on, safe by default, and honest about how its automated decisions are made.

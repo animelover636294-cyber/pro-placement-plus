@@ -1,8 +1,8 @@
-# Pro Placement Plus — Project Proposal
+# Intelligent Placement Management System — Project Proposal
 
 ## 1. Introduction
 
-**Pro Placement Plus** is a comprehensive, full-stack campus placement management platform engineered for educational institutions. It digitises and streamlines the end-to-end placement lifecycle — from company onboarding and eligibility verification to assessment administration, result analysis, and offer tracking — through a single unified portal accessible to administrators and students alike.
+**Intelligent Placement Management System** is a comprehensive, full-stack campus placement management platform engineered for educational institutions. It digitises and streamlines the end-to-end placement lifecycle — from company onboarding and eligibility verification to assessment administration, result analysis, and offer tracking — through a single unified portal accessible to administrators and students alike.
 
 ---
 
@@ -20,7 +20,7 @@ Campus placement processes in most institutions are managed through spreadsheets
 
 ## 3. Proposed Solution
 
-Pro Placement Plus addresses these challenges through a role-based web application with the following pillars:
+Intelligent Placement Management System addresses these challenges through a role-based web application with the following pillars:
 
 | Pillar | Description |
 |--------|-------------|
@@ -230,8 +230,8 @@ Refer to `TEST.md` for detailed manual testing procedures.
 
 ## 13. Conclusion
 
-Pro Placement Plus transforms the campus placement process from a fragmented, manual operation into a streamlined, secure, and intelligent digital workflow. By automating eligibility checks, securing assessments with fullscreen lockdown and anti-cheat mechanisms, and leveraging AI for question generation and feedback, the platform significantly reduces administrative burden while providing students with a transparent, fair, and efficient placement experience.
+Intelligent Placement Management System transforms the campus placement process from a fragmented, manual operation into a streamlined, secure, and intelligent digital workflow. By automating eligibility checks, securing assessments with fullscreen lockdown and anti-cheat mechanisms, and leveraging AI for question generation and feedback, the platform significantly reduces administrative burden while providing students with a transparent, fair, and efficient placement experience.
 
 ---
 
-*© 2026 Pro Placement Plus. All rights reserved.*
+*© 2026 Intelligent Placement Management System. All rights reserved.*

@@ -14,7 +14,7 @@ export function LandingNav() {
   return (
     <header className="fixed top-0 z-50 flex h-20 w-full items-center justify-between border-b border-border/40 bg-card/40 px-5 backdrop-blur-md md:px-16">
       <div className="font-display text-2xl font-bold tracking-tighter text-foreground md:text-[32px]">
-        Pro Placement Plus
+        Intelligent Placement Management System
       </div>
 
       <nav className="hidden items-center gap-6 md:flex">

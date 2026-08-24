@@ -54,7 +54,7 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
           </div>
           <div className="leading-tight">
             <div className="font-display text-[17px] font-bold tracking-tight text-foreground">
-              Pro Placement Plus
+              Intelligent Placement Management System
             </div>
             <span className="text-xs text-muted-foreground">Elite Edition</span>
           </div>

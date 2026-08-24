@@ -1,8 +1,8 @@
-# Pro Placement Plus — Project Documentation
+# Intelligent Placement Management System — Project Documentation
 
 ## Overview
 
-**Pro Placement Plus** is a full-stack placement management platform designed for educational institutions. It streamlines the process of managing campus placements by connecting administrators, students, and companies in a unified system.
+**Intelligent Placement Management System** is a full-stack placement management platform designed for educational institutions. It streamlines the process of managing campus placements by connecting administrators, students, and companies in a unified system.
 
 ## Tech Stack
 
