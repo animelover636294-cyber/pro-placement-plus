@@ -11,6 +11,10 @@ export default defineConfig({
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
   resolve: {
-    alias: { "@": path.resolve(__dirname, "./src") },
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+      // jsdom optionally loads the native `canvas` package; stub it in tests
+      canvas: path.resolve(__dirname, "./src/test/canvasStub.ts"),
+    },
   },
 });
