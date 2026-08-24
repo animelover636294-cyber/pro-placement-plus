@@ -51,18 +51,20 @@ export function LandingHero() {
 
       <div className="perspective-container relative hidden h-[500px] w-full lg:block">
         <div className="hero-bento absolute inset-0 h-full w-full">
-          <div className="glass-panel absolute left-[10%] top-[10%] flex h-[70%] w-[80%] flex-col gap-4 rounded-xl p-4 shadow-2xl">
-            <div className="mb-2 flex gap-2">
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-              <div className="h-3 w-3 rounded-full bg-secondary" />
-            </div>
-            <div className="h-12 w-3/4 rounded-md bg-secondary/60" />
-            <div className="grid flex-1 grid-cols-3 gap-4">
-              <div className="h-full rounded-md bg-secondary/40" />
-              <div className="col-span-2 h-full rounded-md bg-secondary/40" />
-            </div>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <OptimizedImage
+              src={hero1280}
+              srcSetMap={{ 640: hero640, 960: hero960, 1280: hero1280 }}
+              sizes="(max-width: 1024px) 0px, (max-width: 1440px) 45vw, 640px"
+              blurDataURL={HERO_BLUR}
+              width={1280}
+              height={1024}
+              priority
+              alt="Pro Placement Plus dashboard showing placement analytics and a live proctoring session"
+              className="drop-shadow-[0_30px_60px_hsl(var(--primary)/0.25)]"
+            />
           </div>
+
 
           <div className="glass-panel absolute bottom-[5%] right-[5%] flex items-center gap-3 rounded-xl border-primary/30 bg-card/80 p-4 shadow-[0_0_30px_hsl(var(--primary)/0.25)] backdrop-blur-3xl">
             <div className="relative flex h-10 w-10 items-center justify-center rounded-full bg-destructive/20">
