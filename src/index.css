@@ -20,8 +20,8 @@
     --primary: 248 74% 63%;
     --primary-foreground: 250 100% 98%;
 
-    --secondary: 250 30% 94%;
-    --secondary-foreground: 249 30% 22%;
+    --secondary: 246 25% 92%;          /* tint of #7670AB */
+    --secondary-foreground: 246 25% 30%;
 
     --muted: 250 30% 94%;
     --muted-foreground: 250 10% 42%;
@@ -38,8 +38,8 @@
     --warning: 27 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    --tertiary: 27 100% 55%;
-    --tertiary-foreground: 27 100% 12%;
+    --tertiary: 33 100% 34%;           /* #AC5D00 */
+    --tertiary-foreground: 0 0% 100%;
 
     --border: 250 20% 88%;
     --input: 250 20% 88%;
@@ -62,7 +62,7 @@
 
   .dark {
     /* Core dark tokens — v3 "Elite Edition" spec */
-    --background: 240 23% 5%;          /* #0a0a0f */
+    --background: 240 23% 5%;          /* #0A0A0F */
     --foreground: 264 20% 90%;         /* #e4e1e9 */
 
     --card: 240 10% 9%;                /* #131318 */
@@ -71,16 +71,16 @@
     --popover: 240 12% 7%;             /* #0e0e13 */
     --popover-foreground: 264 20% 90%;
 
-    --primary: 248 74% 63%;            /* #6c5ce7 */
+    --primary: 248 74% 64%;            /* #6C5CE7 */
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 252 8% 21%;           /* #35343a */
-    --secondary-foreground: 250 18% 84%;
+    --secondary: 246 25% 55%;          /* #7670AB */
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 250 10% 11%;              /* #1b1b20 */
     --muted-foreground: 254 10% 59%;   /* #928ea0 */
 
-    --accent: 252 8% 18%;
+    --accent: 246 20% 20%;
     --accent-foreground: 248 100% 87%; /* #c6bfff */
 
     --destructive: 6 100% 71%;
@@ -92,8 +92,8 @@
     --warning: 27 100% 74%;
     --warning-foreground: 27 100% 12%;
 
-    --tertiary: 27 100% 74%;           /* #ffb77d */
-    --tertiary-foreground: 27 100% 15%;
+    --tertiary: 33 100% 34%;           /* #AC5D00 */
+    --tertiary-foreground: 0 0% 100%;
 
     --border: 251 10% 24%;             /* #474554 */
     --input: 251 10% 24%;
