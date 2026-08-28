@@ -2,7 +2,7 @@ import { BrainCircuit, FileCheck2, Megaphone, ShieldCheck } from "lucide-react";
 
 export function LandingFeatures() {
   return (
-    <section id="features" className="flex flex-col gap-12 px-5 py-24 md:px-16">
+    <section id="solutions" className="flex scroll-mt-24 flex-col gap-12 px-5 py-24 md:px-16">
       <div className="text-center">
         <h2 className="font-display text-2xl font-bold text-foreground sm:text-[32px]">
           Engineered for Precision
