@@ -2,11 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { Bell } from "lucide-react";
 
 const links = [
-  { label: "Solutions", href: "#features" },
-  { label: "Recruiters", href: "#features" },
-  { label: "Success Stories", href: "#cta" },
-  { label: "Pricing", href: "#cta" },
+  { label: "Solutions", href: "#solutions" },
+  { label: "Recruiters", href: "#recruiters" },
+  { label: "Success Stories", href: "#success-stories" },
 ];
+
 
 export function LandingNav() {
   const navigate = useNavigate();
