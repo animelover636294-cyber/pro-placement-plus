@@ -3,9 +3,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { LandingFeatures } from "@/components/landing/LandingFeatures";
+import { LandingRecruiters } from "@/components/landing/LandingRecruiters";
+import { LandingSuccess } from "@/components/landing/LandingSuccess";
 import { LandingCTA } from "@/components/landing/LandingCTA";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
+
 import { AnimatedBackground } from "@/components/3d/AnimatedBackground";
 
 export default function Index() {
