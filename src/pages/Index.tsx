@@ -30,7 +30,10 @@ export default function Index() {
         <LandingNav />
         <LandingHero />
         <LandingFeatures />
+        <LandingRecruiters />
+        <LandingSuccess />
         <LandingCTA />
+
         <LandingFooter />
       </div>
     </div>
