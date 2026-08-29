@@ -31,6 +31,7 @@ import StudentSchedule from "./pages/student/StudentSchedule";
 import StudentProfile from "./pages/student/StudentProfile";
 import StudentCompanies from "./pages/student/StudentCompanies";
 import CompanyDetail from "./pages/student/CompanyDetail";
+import StudentAssistant from "./pages/student/StudentAssistant";
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,8 @@ const App = () => (
               <Route path="/dashboard/profile" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentProfile /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/companies" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentCompanies /></DashboardLayout></ProtectedRoute>} />
               <Route path="/dashboard/companies/:id" element={<ProtectedRoute requiredRole="student"><DashboardLayout><CompanyDetail /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/assistant" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentAssistant /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/dashboard/assistant/:threadId" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentAssistant /></DashboardLayout></ProtectedRoute>} />
 
               <Route path="*" element={<NotFound />} />
             </Routes>

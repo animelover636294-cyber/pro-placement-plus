@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   LayoutDashboard, Building2, FileText, Users, BarChart3, ClipboardList,
-  GraduationCap, CalendarDays, Trophy, UserCircle, LogOut, Menu, Shield,
+  GraduationCap, CalendarDays, Trophy, UserCircle, LogOut, Menu, Shield, Bot,
 } from "lucide-react";
 import { toast } from "sonner";
 import { NotificationCenter } from "@/components/NotificationCenter";
@@ -40,6 +40,7 @@ const studentLinks = [
   { title: "My Tests", url: "/dashboard/tests", icon: ClipboardList },
   { title: "Results", url: "/dashboard/results", icon: Trophy },
   { title: "Schedule", url: "/dashboard/schedule", icon: CalendarDays },
+  { title: "Assistant", url: "/dashboard/assistant", icon: Bot },
   { title: "Profile", url: "/dashboard/profile", icon: UserCircle },
 ];
 
