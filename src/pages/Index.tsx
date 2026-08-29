@@ -10,6 +10,7 @@ import { LandingNav } from "@/components/landing/LandingNav";
 import { LandingFooter } from "@/components/landing/LandingFooter";
 
 import { AnimatedBackground } from "@/components/3d/AnimatedBackground";
+import { SiteChatbot } from "@/components/SiteChatbot";
 
 export default function Index() {
   const { user, role, loading } = useAuth();
@@ -36,6 +37,7 @@ export default function Index() {
 
         <LandingFooter />
       </div>
+      <SiteChatbot />
     </div>
   );
 }

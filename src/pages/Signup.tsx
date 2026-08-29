@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { GraduationCap, Loader2 } from "lucide-react";
+import { GraduationCap, Loader2, Home } from "lucide-react";
 import { AnimatedBackground } from "@/components/3d/AnimatedBackground";
 import { GlassCard } from "@/components/3d/GlassCard";
 import { motion } from "framer-motion";
@@ -91,6 +91,11 @@ export default function Signup() {
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
       <AnimatedBackground />
       <div className="relative z-10 w-full max-w-md">
+        <div className="mb-4 flex justify-center">
+          <Link to="/" className="glass-button inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <Home className="h-4 w-4" /> Go to Home
+          </Link>
+        </div>
         <GlassCard>
           <div className="text-center">
             <motion.div
