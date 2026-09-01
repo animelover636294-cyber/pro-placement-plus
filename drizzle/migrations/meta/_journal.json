@@ -8,6 +8,13 @@
       "when": 1788240412701,
       "tag": "0000_company_role_invites_registrations",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1788240442939,
+      "tag": "0001_company_portal_schema",
+      "breakpoints": true
     }
   ]
 }

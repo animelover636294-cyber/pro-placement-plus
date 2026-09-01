@@ -140,6 +140,7 @@ export type Database = {
         Row: {
           allowed_branches: string[] | null
           bond_details: string | null
+          contact_email: string | null
           contact_info: Json | null
           created_at: string
           description: string | null
@@ -150,6 +151,7 @@ export type Database = {
           job_type: string | null
           max_backlogs: number | null
           name: string
+          owner_user_id: string | null
           requirements: string[] | null
           salary_package: string | null
           selection_process: string[] | null
@@ -160,6 +162,7 @@ export type Database = {
         Insert: {
           allowed_branches?: string[] | null
           bond_details?: string | null
+          contact_email?: string | null
           contact_info?: Json | null
           created_at?: string
           description?: string | null
@@ -170,6 +173,7 @@ export type Database = {
           job_type?: string | null
           max_backlogs?: number | null
           name: string
+          owner_user_id?: string | null
           requirements?: string[] | null
           salary_package?: string | null
           selection_process?: string[] | null
@@ -180,6 +184,7 @@ export type Database = {
         Update: {
           allowed_branches?: string[] | null
           bond_details?: string | null
+          contact_email?: string | null
           contact_info?: Json | null
           created_at?: string
           description?: string | null
@@ -190,6 +195,7 @@ export type Database = {
           job_type?: string | null
           max_backlogs?: number | null
           name?: string
+          owner_user_id?: string | null
           requirements?: string[] | null
           salary_package?: string | null
           selection_process?: string[] | null
@@ -198,6 +204,53 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      company_invites: {
+        Row: {
+          accepted_at: string | null
+          accepted_by: string | null
+          company_id: string | null
+          company_name: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          invited_by: string
+          token: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          company_id?: string | null
+          company_name: string
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          invited_by: string
+          token?: string
+        }
+        Update: {
+          accepted_at?: string | null
+          accepted_by?: string | null
+          company_id?: string | null
+          company_name?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          invited_by?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_invites_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {
@@ -427,6 +480,35 @@ export type Database = {
           },
         ]
       }
+      test_registrations: {
+        Row: {
+          id: string
+          registered_at: string
+          student_id: string
+          test_id: string
+        }
+        Insert: {
+          id?: string
+          registered_at?: string
+          student_id: string
+          test_id: string
+        }
+        Update: {
+          id?: string
+          registered_at?: string
+          student_id?: string
+          test_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "test_registrations_test_id_fkey"
+            columns: ["test_id"]
+            isOneToOne: false
+            referencedRelation: "tests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tests: {
         Row: {
           company_id: string | null
@@ -439,6 +521,8 @@ export type Database = {
           proctor_config: Json | null
           question_bank: Json | null
           questions_per_student: number | null
+          registration_closes_at: string | null
+          registration_opens_at: string | null
           retake_question_bank: Json | null
           scheduled_date: string
           title: string
@@ -455,6 +539,8 @@ export type Database = {
           proctor_config?: Json | null
           question_bank?: Json | null
           questions_per_student?: number | null
+          registration_closes_at?: string | null
+          registration_opens_at?: string | null
           retake_question_bank?: Json | null
           scheduled_date: string
           title: string
@@ -471,6 +557,8 @@ export type Database = {
           proctor_config?: Json | null
           question_bank?: Json | null
           questions_per_student?: number | null
+          registration_closes_at?: string | null
+          registration_opens_at?: string | null
           retake_question_bank?: Json | null
           scheduled_date?: string
           title?: string
