@@ -3,7 +3,7 @@ export type AssistantMessage = { role: "user" | "assistant"; content: string };
 const FUNCTIONS_BASE = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1`;
 
 interface StreamOptions {
-  fn: "student-assistant" | "site-assistant";
+  fn: "student-assistant" | "site-assistant" | "admin-assistant";
   messages: AssistantMessage[];
   accessToken?: string | null;
   signal?: AbortSignal;
