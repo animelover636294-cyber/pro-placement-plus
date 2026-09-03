@@ -31,6 +31,7 @@ const adminLinks = [
   { title: "Analytics", url: "/admin/analytics", icon: BarChart3 },
   { title: "Reports", url: "/admin/reports", icon: FileText },
   { title: "Leaderboard", url: "/admin/leaderboard", icon: Trophy },
+  { title: "Assistant", url: "/admin/assistant", icon: Bot },
   { title: "Security", url: "/admin/settings", icon: Shield },
 ];
 
@@ -44,8 +45,14 @@ const studentLinks = [
   { title: "Profile", url: "/dashboard/profile", icon: UserCircle },
 ];
 
-function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
-  const links = isAdmin ? adminLinks : studentLinks;
+const companyLinks = [
+  { title: "Dashboard", url: "/company", icon: LayoutDashboard },
+  { title: "Assessments", url: "/company/tests", icon: ClipboardList },
+  { title: "Reports", url: "/company/reports", icon: FileText },
+];
+
+function AppSidebar({ role }: { role: string | null }) {
+  const links = role === "admin" ? adminLinks : role === "company" ? companyLinks : studentLinks;
   return (
     <Sidebar className="border-r border-border/40 bg-sidebar/50 backdrop-blur-3xl">
       <SidebarContent className="bg-transparent">
@@ -62,7 +69,7 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
         </div>
         <SidebarGroup>
           <SidebarGroupLabel className="label-caps px-5 tracking-[0.15em] text-accent-foreground">
-            {isAdmin ? "Admin" : "Student"}
+            {role === "admin" ? "Admin" : role === "company" ? "Recruiter" : "Student"}
           </SidebarGroupLabel>
           <SidebarGroupContent className="mt-2 px-3">
             <SidebarMenu className="gap-1">
@@ -71,7 +78,7 @@ function AppSidebar({ isAdmin }: { isAdmin: boolean }) {
                   <SidebarMenuButton asChild>
                     <NavLink
                       to={item.url}
-                      end={item.url === "/admin" || item.url === "/dashboard"}
+                      end={item.url === "/admin" || item.url === "/dashboard" || item.url === "/company"}
                       className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-all duration-300 hover:bg-white/5 hover:text-foreground"
                       activeClassName="nav-pill-active font-semibold hover:bg-primary hover:text-primary-foreground"
                     >
@@ -138,7 +145,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
     <SidebarProvider>
       <div className="relative flex min-h-screen w-full bg-background">
         <AnimatedBackground />
-        <AppSidebar isAdmin={isAdmin} />
+        <AppSidebar role={role} />
         <div className="relative z-10 flex flex-1 flex-col">
           <header className="flex h-16 items-center justify-between border-b border-border/40 bg-white/5 px-6 shadow-[0_1px_0_0_hsl(0_0%_100%/0.06)_inset] backdrop-blur-3xl">
             <SidebarTrigger><Menu className="h-5 w-5 text-muted-foreground" /></SidebarTrigger>

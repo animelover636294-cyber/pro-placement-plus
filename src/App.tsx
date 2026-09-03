@@ -32,6 +32,12 @@ import StudentProfile from "./pages/student/StudentProfile";
 import StudentCompanies from "./pages/student/StudentCompanies";
 import CompanyDetail from "./pages/student/CompanyDetail";
 import StudentAssistant from "./pages/student/StudentAssistant";
+import AdminAssistant from "./pages/admin/AdminAssistant";
+
+import CompanyInvite from "./pages/CompanyInvite";
+import CompanyDashboard from "./pages/company/CompanyDashboard";
+import CompanyTests from "./pages/company/CompanyTests";
+import CompanyReports from "./pages/company/CompanyReports";
 
 const queryClient = new QueryClient();
 
@@ -39,7 +45,7 @@ function AuthRedirect() {
   const { user, role, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  return <Navigate to={role === "admin" ? "/admin" : "/dashboard"} replace />;
+  return <Navigate to={role === "admin" ? "/admin" : role === "company" ? "/company" : "/dashboard"} replace />;
 }
 
 const App = () => (
@@ -56,6 +62,7 @@ const App = () => (
               <Route path="/signup" element={<Signup />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
               <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/company-invite" element={<CompanyInvite />} />
 
               {/* Admin routes */}
               <Route path="/admin" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminDashboard /></DashboardLayout></ProtectedRoute>} />
@@ -65,7 +72,13 @@ const App = () => (
               <Route path="/admin/analytics" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminAnalytics /></DashboardLayout></ProtectedRoute>} />
               <Route path="/admin/reports" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminReports /></DashboardLayout></ProtectedRoute>} />
               <Route path="/admin/leaderboard" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminLeaderboard /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/admin/assistant" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminAssistant /></DashboardLayout></ProtectedRoute>} />
               <Route path="/admin/settings" element={<ProtectedRoute requiredRole="admin"><DashboardLayout><AdminSettings /></DashboardLayout></ProtectedRoute>} />
+
+              {/* Company routes */}
+              <Route path="/company" element={<ProtectedRoute requiredRole="company"><DashboardLayout><CompanyDashboard /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/company/tests" element={<ProtectedRoute requiredRole="company"><DashboardLayout><CompanyTests /></DashboardLayout></ProtectedRoute>} />
+              <Route path="/company/reports" element={<ProtectedRoute requiredRole="company"><DashboardLayout><CompanyReports /></DashboardLayout></ProtectedRoute>} />
 
               {/* Student routes */}
               <Route path="/dashboard" element={<ProtectedRoute requiredRole="student"><DashboardLayout><StudentDashboard /></DashboardLayout></ProtectedRoute>} />
